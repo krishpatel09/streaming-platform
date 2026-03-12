@@ -18,8 +18,8 @@ var redisEnvs = []string{
 
 func LoadRedisConfig() (RedisConfig, error) {
 	var cfg RedisConfig
-	viper.AddConfigPath("./")
-	viper.SetConfigFile(".env")
+	viper.AddConfigPath("../../")
+	viper.SetConfigFile("../../.env")
 	viper.ReadInConfig()
 	for _, env := range redisEnvs {
 		if err := viper.BindEnv(env); err != nil {

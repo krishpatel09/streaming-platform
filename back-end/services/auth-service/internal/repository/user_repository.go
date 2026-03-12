@@ -10,6 +10,7 @@ type UserRepository interface {
 	Create(user *domain.User) error
 	FindByEmail(email string) (*domain.User, error)
 	FindByID(id uuid.UUID) (*domain.User, error)
+	UpdateVerificationStatus(email string, status bool) error
 }
 
 type userRepository struct {
@@ -40,4 +41,8 @@ func (r *userRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *userRepository) UpdateVerificationStatus(email string, status bool) error {
+	return r.db.Model(&domain.User{}).Where("email = ?", email).Update("is_verified", status).Error
 }

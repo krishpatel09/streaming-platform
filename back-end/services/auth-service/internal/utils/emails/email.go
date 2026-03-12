@@ -9,6 +9,7 @@ import (
 	"github.com/resend/resend-go/v3"
 )
 
+//go:embed templates/*
 var templateFS embed.FS
 
 type EmailSender struct {
@@ -49,6 +50,7 @@ func (s *EmailSender) SendOTP(toEmail, otp string) error {
 
 	sent, err := s.client.Emails.Send(params)
 	if err != nil {
+		fmt.Printf("Error sending email to %s: %v\n", toEmail, err)
 		return fmt.Errorf("resend api error: %w", err)
 	}
 

@@ -20,8 +20,8 @@ var envs = []string{
 
 func LoadPostgresConfig() (PostgresConfig, error) {
 	var cfg PostgresConfig
-	viper.AddConfigPath("./")
-	viper.SetConfigFile(".env")
+	viper.AddConfigPath("../../")
+	viper.SetConfigFile("../../.env")
 	viper.ReadInConfig()
 	for _, env := range envs {
 		if err := viper.BindEnv(env); err != nil {
@@ -43,7 +43,7 @@ func LoadPostgresConfig() (PostgresConfig, error) {
 }
 
 func LoadEnv() error {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("../../.env")
 	if err != nil {
 		return err
 	}

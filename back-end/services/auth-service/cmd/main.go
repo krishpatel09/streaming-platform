@@ -25,7 +25,7 @@ func main() {
 	}
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "50051"
+		port = "5002"
 	}
 
 	log.Printf("Starting auth-service on :%s", port)

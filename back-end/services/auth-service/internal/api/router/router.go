@@ -13,15 +13,17 @@ func NewRouter(h *handler.AuthHandler) *gin.Engine {
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"status":  "UP",
 			"service": "auth-service",
+			"status":  "Ok",
 		})
 	})
 
 	auth := r.Group("/auth")
 	{
-		auth.POST("/register", h.Register)
-		auth.POST("/login", h.Login)
+		auth.POST("/api/register", h.Register)
+		auth.POST("/api/login", h.Login)
+		auth.POST("/api/verify-otp", h.VerifyOTP)
+		auth.POST("/api/resend-otp", h.ResendOTP)
 	}
 	protected := r.Group("/auth")
 	protected.Use(api.AuthMiddleware())

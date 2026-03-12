@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -10,6 +11,7 @@ import (
 type RedisRepository interface {
 	SetOTP(email string, otp string, expiration time.Duration) error
 	GetOTP(email string) (string, error)
+	DeleteOTP(email string) error
 }
 
 type redisRepository struct {
@@ -22,7 +24,7 @@ func NewRedisRepository(db *redis.Client) RedisRepository {
 
 func (r *redisRepository) SetOTP(email string, otp string, expiration time.Duration) error {
 	ctx := context.Background()
-	// Key format: otp:user@example.com
+	fmt.Printf("Storing OTP in Redis - Email: %s, OTP: %s\n", email, otp)
 	return r.db.Set(ctx, "otp:"+email, otp, expiration).Err()
 }
 

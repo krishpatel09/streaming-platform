@@ -7,13 +7,28 @@ import (
 	"github.com/google/uuid"
 )
 
-func GenerateJWT(userID uuid.UUID, secretKey string) (string, error) {
-	claims := jwt.MapClaims{
+func GenerateTokens(userID uuid.UUID, secretKey string) (string, string, error) {
+	accessClaims := jwt.MapClaims{
 		"user_id": userID.String(),
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 		"iat":     time.Now().Unix(),
+		"type":    "access",
+	}
+	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString([]byte(secretKey))
+	if err != nil {
+		return "", "", err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secretKey))
+	refreshClaims := jwt.MapClaims{
+		"user_id": userID.String(),
+		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"iat":     time.Now().Unix(),
+		"type":    "refresh",
+	}
+	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(secretKey))
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }
