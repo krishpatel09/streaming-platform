@@ -12,7 +12,7 @@ import (
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/config"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/db"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/repository"
-	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/service"
+	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/usecase"
 )
 
 // Injectors from wire.go:
@@ -28,10 +28,14 @@ func Initialize(cfg config.PostgresConfig, redisCfg config.RedisConfig) (*gin.En
 		return nil, err
 	}
 	redisRepository := repository.NewRedisRepository(client)
+	preferenceRepository := repository.NewPreferenceRepository(gormDB)
+	refreshTokenRepository := repository.NewRefreshTokenRepository(gormDB)
 	emailSender := ProvideEmailSender()
 	secretKey := os.Getenv("SECRET_KEY")
-	authService := service.NewAuthService(userRepository, redisRepository, emailSender, secretKey)
-	authHandler := handler.NewAuthHandler(authService)
-	engine := router.NewRouter(authHandler)
+	authUseCase := usecase.NewAuthUseCase(userRepository, redisRepository, refreshTokenRepository, emailSender, secretKey)
+	userUseCase := usecase.NewUserUseCase(userRepository, preferenceRepository)
+	authHandler := handler.NewAuthHandler(authUseCase)
+	userHandler := handler.NewUserHandler(userUseCase)
+	engine := router.NewRouter(authHandler, userHandler)
 	return engine, nil
 }

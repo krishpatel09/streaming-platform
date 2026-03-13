@@ -12,12 +12,12 @@ func ProvideEmailSender() *email.EmailSender {
 	fromEmail := os.Getenv("EMAIL_FROM")
 
 	if apiKey == "" {
-		fmt.Println("WARNING: RESEND_API_KEY is not set in environment variables")
+		fmt.Println("RESEND_API_KEY is not set in environment variables")
 	}
 
 	if fromEmail == "" {
 		fromEmail = "onboarding@resend.dev"
-		fmt.Printf("WARNING: EMAIL_FROM is not set, defaulting to %s\n", fromEmail)
+		fmt.Printf("EMAIL_FROM is not set, defaulting to %s\n", fromEmail)
 	}
 
 	return email.NewEmailSender(apiKey, fromEmail)

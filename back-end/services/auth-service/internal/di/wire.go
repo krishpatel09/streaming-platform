@@ -11,7 +11,7 @@ import (
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/config"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/db"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/repository"
-	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/service"
+	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/usecase"
 )
 
 func Initialize(cfg config.PostgresConfig, redisCfg config.RedisConfig) (*gin.Engine, error) {
@@ -20,9 +20,13 @@ func Initialize(cfg config.PostgresConfig, redisCfg config.RedisConfig) (*gin.En
 		db.ConnectRedis,
 		repository.NewUserRepository,
 		repository.NewRedisRepository,
+		repository.NewPreferenceRepository,
+		repository.NewRefreshTokenRepository,
 		ProvideEmailSender,
-		service.NewAuthService,
+		usecase.NewAuthUseCase,
+		usecase.NewUserUseCase,
 		handler.NewAuthHandler,
+		handler.NewUserHandler,
 		router.NewRouter,
 	)
 

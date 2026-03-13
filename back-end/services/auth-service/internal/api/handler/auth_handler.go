@@ -4,17 +4,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/domain"
-	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/service"
+	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/usecase"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/utils/response"
 )
 
 type AuthHandler struct {
-	svc service.AuthService
+	svc usecase.AuthUseCase
 }
 
-func NewAuthHandler(svc service.AuthService) *AuthHandler {
+func NewAuthHandler(svc usecase.AuthUseCase) *AuthHandler {
 	return &AuthHandler{svc: svc}
 }
 
@@ -98,23 +97,37 @@ func (h *AuthHandler) ResendOTP(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *AuthHandler) GetProfile(c *gin.Context) {
-	userIDStr := c.GetString("user_id")
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user id"})
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	var req domain.RefreshTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	res, err := h.svc.GetProfile(userID)
+	res, err := h.svc.RefreshToken(req)
 	if err != nil {
 		if r, ok := err.(response.Response); ok {
 			c.JSON(r.Status, r)
 			return
 		}
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (h *AuthHandler) Logout(c *gin.Context) {
+	var req domain.RefreshTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.svc.Logout(req.RefreshToken); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }

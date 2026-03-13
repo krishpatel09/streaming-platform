@@ -7,13 +7,17 @@ import (
 )
 
 type User struct {
-	ID         uuid.UUID `gorm:"type:uuid;primaryKey"`
-	Username   string    `gorm:"uniqueIndex;not null"`
-	Email      string    `gorm:"uniqueIndex;not null"`
-	Password   string    `gorm:"not null"`
-	IsVerified bool      `gorm:"default:false"`
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID            uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Username      string         `gorm:"not null"`
+	Email         string         `gorm:"uniqueIndex;not null"`
+	Password      string         `gorm:"not null"`
+	AvatarURL     string         `gorm:"type:text"`
+	IsVerified    bool           `gorm:"default:false"`
+	IsActive      bool           `gorm:"default:true"`
+	CreatedAt     time.Time      `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt     time.Time      `gorm:"default:CURRENT_TIMESTAMP"`
+	Profiles      []Profile      `gorm:"foreignKey:UserID;references:ID"`
+	RefreshTokens []RefreshToken `gorm:"foreignKey:UserID;references:ID"`
 }
 
 type UserResponse struct {
@@ -42,6 +46,11 @@ type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refreshToken" binding:"required"`
+}
+
 type AuthResponse struct {
 	User         UserResponse `json:"user"`
 	AccessToken  string       `json:"accessToken,omitempty"`
