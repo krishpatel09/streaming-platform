@@ -12,6 +12,10 @@ type RedisRepository interface {
 	SetOTP(email string, otp string, expiration time.Duration) error
 	GetOTP(email string) (string, error)
 	DeleteOTP(email string) error
+
+	SetRefreshToken(token string, userID string, expiration time.Duration) error
+	GetRefreshToken(token string) (string, error)
+	DeleteRefreshToken(token string) error
 }
 
 type redisRepository struct {
@@ -36,4 +40,19 @@ func (r *redisRepository) GetOTP(email string) (string, error) {
 func (r *redisRepository) DeleteOTP(email string) error {
 	ctx := context.Background()
 	return r.db.Del(ctx, "otp:"+email).Err()
+}
+
+func (r *redisRepository) SetRefreshToken(token string, userID string, expiration time.Duration) error {
+	ctx := context.Background()
+	return r.db.Set(ctx, "refresh:"+token, userID, expiration).Err()
+}
+
+func (r *redisRepository) GetRefreshToken(token string) (string, error) {
+	ctx := context.Background()
+	return r.db.Get(ctx, "refresh:"+token).Result()
+}
+
+func (r *redisRepository) DeleteRefreshToken(token string) error {
+	ctx := context.Background()
+	return r.db.Del(ctx, "refresh:"+token).Err()
 }

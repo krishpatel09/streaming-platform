@@ -22,3 +22,7 @@ func ProvideEmailSender() *email.EmailSender {
 
 	return email.NewEmailSender(apiKey, fromEmail)
 }
+
+func ProvideSecretKey() string {
+	return os.Getenv("SECRET_KEY")
+}

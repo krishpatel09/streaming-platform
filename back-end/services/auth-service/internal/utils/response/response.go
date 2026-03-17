@@ -6,9 +6,10 @@ import (
 )
 
 type Response struct {
-	Status  int    `json:"status"`
-	Message string `json:"message"`
-	Data    any    `json:"data,omitempty"`
+	StatusCode int    `json:"-"`
+	Success    bool   `json:"success"`
+	Message    string `json:"message"`
+	Data       any    `json:"data,omitempty"`
 }
 
 func (r Response) Error() string {
@@ -20,44 +21,50 @@ func WriteJson(w http.ResponseWriter, status int, message string, data any) erro
 	w.WriteHeader(status)
 
 	return json.NewEncoder(w).Encode(Response{
-		Status:  status,
-		Message: message,
-		Data:    data,
+		StatusCode: status,
+		Success:    status >= 200 && status < 300,
+		Message:    message,
+		Data:       data,
 	})
 }
 
-func NewResponse(status int, message string, data any) Response {
+func NewResponse(statusCode int, message string, data any) Response {
 	return Response{
-		Status:  status,
-		Message: message,
-		Data:    data,
+		StatusCode: statusCode,
+		Success:    statusCode >= 200 && statusCode < 300,
+		Message:    message,
+		Data:       data,
 	}
 }
 
 func GeneralError(err error) Response {
 	return Response{
-		Status:  http.StatusInternalServerError,
-		Message: err.Error(),
+		StatusCode: http.StatusInternalServerError,
+		Success:    false,
+		Message:    err.Error(),
 	}
 }
 
 func EmailAlreadyExists() Response {
 	return Response{
-		Status:  http.StatusConflict,
-		Message: "email already exists",
+		StatusCode: http.StatusConflict,
+		Success:    false,
+		Message:    "email already exists",
 	}
 }
 
 func Unauthorized(message string) Response {
 	return Response{
-		Status:  http.StatusUnauthorized,
-		Message: message,
+		StatusCode: http.StatusUnauthorized,
+		Success:    false,
+		Message:    message,
 	}
 }
 
 func BadRequest(message string) Response {
 	return Response{
-		Status:  http.StatusBadRequest,
-		Message: message,
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
+		Message:    message,
 	}
 }

@@ -20,7 +20,11 @@ func ConnectPostgres(cfg config.PostgresConfig) (*gorm.DB, error) {
 	}
 	fmt.Println("PostgreSQL Database Connected Successfully")
 
-	DB.AutoMigrate(&domain.User{})
+	// if DB.Migrator().HasIndex(&domain.User{}, "idx_users_username") {
+	// 	DB.Migrator().DropIndex(&domain.User{}, "idx_users_username")
+	// }
+
+	DB.AutoMigrate(&domain.User{}, &domain.RefreshToken{})
 	return DB, nil
 
 }

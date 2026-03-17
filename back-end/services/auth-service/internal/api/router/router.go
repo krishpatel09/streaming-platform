@@ -32,8 +32,6 @@ func NewRouter(h *handler.AuthHandler, uh *handler.UserHandler) *gin.Engine {
 	user.Use(middleware.AuthMiddleware())
 	{
 		user.GET("/api/profile", uh.GetProfile)
-		user.GET("/api/preference", uh.GetPreference)
-		user.PUT("/api/preference", uh.UpdatePreference)
 	}
 
 	return r

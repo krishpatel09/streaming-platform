@@ -9,19 +9,15 @@ import (
 
 type UserUseCase interface {
 	GetProfile(userID uuid.UUID) (*domain.UserResponse, error)
-	GetPreference(profileID uuid.UUID) (*domain.UserPreferenceResponse, error)
-	UpdatePreference(profileID uuid.UUID, req domain.UserPreferenceRequest) (*domain.UserPreferenceResponse, error)
 }
 
 type userUseCase struct {
-	userRepo       repository.UserRepository
-	preferenceRepo repository.PreferenceRepository
+	userRepo repository.UserRepository
 }
 
-func NewUserUseCase(userRepo repository.UserRepository, preferenceRepo repository.PreferenceRepository) UserUseCase {
+func NewUserUseCase(userRepo repository.UserRepository) UserUseCase {
 	return &userUseCase{
-		userRepo:       userRepo,
-		preferenceRepo: preferenceRepo,
+		userRepo: userRepo,
 	}
 }
 
@@ -32,73 +28,8 @@ func (u *userUseCase) GetProfile(userID uuid.UUID) (*domain.UserResponse, error)
 	}
 
 	return &domain.UserResponse{
-		ID:         user.ID,
-		Username:   user.Username,
-		Email:      user.Email,
-		IsVerified: user.IsVerified,
-	}, nil
-}
-
-func (u *userUseCase) GetPreference(profileID uuid.UUID) (*domain.UserPreferenceResponse, error) {
-	pref, err := u.preferenceRepo.GetByProfileID(profileID)
-	if err != nil {
-		return nil, response.BadRequest("preferences not found")
-	}
-
-	return &domain.UserPreferenceResponse{
-		PreferredGenres:     pref.PreferredGenres,
-		PreferredLanguages:  pref.PreferredLanguages,
-		AutoplayNext:        pref.AutoplayNext,
-		DefaultVideoQuality: pref.DefaultVideoQuality,
-		EmailNotifications:  pref.EmailNotifications,
-		PushNotifications:   pref.PushNotifications,
-	}, nil
-}
-
-func (u *userUseCase) UpdatePreference(profileID uuid.UUID, req domain.UserPreferenceRequest) (*domain.UserPreferenceResponse, error) {
-	pref, err := u.preferenceRepo.GetByProfileID(profileID)
-	if err != nil {
-		// If not exists, create new one
-		pref = &domain.UserPreferences{
-			ProfileID: profileID,
-		}
-	}
-
-	if req.PreferredGenres != nil {
-		pref.PreferredGenres = req.PreferredGenres
-	}
-	if req.PreferredLanguages != nil {
-		pref.PreferredLanguages = req.PreferredLanguages
-	}
-	if req.AutoplayNext != nil {
-		pref.AutoplayNext = *req.AutoplayNext
-	}
-	if req.DefaultVideoQuality != "" {
-		pref.DefaultVideoQuality = req.DefaultVideoQuality
-	}
-	if req.EmailNotifications != nil {
-		pref.EmailNotifications = *req.EmailNotifications
-	}
-	if req.PushNotifications != nil {
-		pref.PushNotifications = *req.PushNotifications
-	}
-
-	if pref.ID == uuid.Nil {
-		err = u.preferenceRepo.Create(pref)
-	} else {
-		err = u.preferenceRepo.Update(pref)
-	}
-
-	if err != nil {
-		return nil, response.GeneralError(err)
-	}
-
-	return &domain.UserPreferenceResponse{
-		PreferredGenres:     pref.PreferredGenres,
-		PreferredLanguages:  pref.PreferredLanguages,
-		AutoplayNext:        pref.AutoplayNext,
-		DefaultVideoQuality: pref.DefaultVideoQuality,
-		EmailNotifications:  pref.EmailNotifications,
-		PushNotifications:   pref.PushNotifications,
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
 	}, nil
 }
