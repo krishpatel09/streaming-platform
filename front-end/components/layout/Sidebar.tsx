@@ -47,7 +47,7 @@ const NavItem = ({
   </Link>
 );
 
-const Navbar = () => {
+const Sidebar = () => {
   const setOpen = useAuthStore((state) => state.setOpen);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -117,7 +117,7 @@ const Navbar = () => {
           isExpanded={isHovered}
         />
         <NavItem
-          href="/in/my-space"
+          href="/in/mypage"
           icon={User}
           label="My Space"
           isExpanded={isHovered}
@@ -127,4 +127,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default Sidebar;

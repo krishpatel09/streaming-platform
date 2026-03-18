@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/LandingPage/Navbar";
-import Footer from "@/components/LandingPage/Footer";
-import { Toaster } from "@/components/ui/sonner";
-import AuthDialog from "@/components/LandingPage/AuthDialog";
+import Sidebar from "@/components/layout/Sidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,15 +27,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-row bg-[#0f1014]`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-[#0f1014] text-white overflow-x-hidden`}
       >
-        <Navbar />
-        <div className="flex flex-col grow ml-20">
-          <main className="grow">{children}</main>
-          <Footer />
-        </div>
-        <AuthDialog />
-        <Toaster position="top-center" richColors />
+        <Sidebar />
+        {/* --PAGE-CONTENT-LEFT-SPACE: calc(--SIDENAV-WIDTH + --SPACE-04) = 5rem + 1rem */}
+        <main className="grow w-full" style={{ paddingLeft: "5rem" }}>{children}</main>
       </body>
     </html>
   );

@@ -1,0 +1,170 @@
+[
+  {
+    "id": "non-stop-sports",
+    "title": "Non-Stop Sports",
+    "orientation": "horizontal",
+    "items": [
+      {
+        "title": "Hot Take: Is Kohli Still RCB's Heartbeat?",
+        "image": "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=500&auto=format&fit=crop",
+        "duration": "13m",
+        "isNewEpisode": false,
+        "description": "Watch experts debate whether Virat Kohli remains the heartbeat of Royal Challengers Bengaluru's campaign this IPL season."
+      },
+      {
+        "title": "How Many Records Will Suryavanshi Break?",
+        "image": "https://images.unsplash.com/photo-1593341646782-e0b495cff86d?q=80&w=500&auto=format&fit=crop",
+        "duration": "2m",
+        "isNewEpisode": true,
+        "description": "Watch the experts discuss Vaibhav Suryavanshi's importance to Rajasthan Royals' race to the TATA IPL 2026 title."
+      },
+      {
+        "title": "Know Your Team: MI",
+        "image": "https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=500&auto=format&fit=crop",
+        "duration": "12m",
+        "isNewEpisode": false,
+        "description": "A deep dive into the Mumbai Indians' squad for IPL 2026, covering their strengths, weaknesses, and key players to watch."
+      },
+      {
+        "title": "Captain Pant's Plans for the New Season",
+        "image": "https://images.unsplash.com/photo-1508098682722-e99c643e29ad?q=80&w=500&auto=format&fit=crop",
+        "duration": "11m",
+        "isNewEpisode": false,
+        "description": "Rishabh Pant opens up about his expectations, leadership style and what he plans for the Lucknow Super Giants this IPL."
+      },
+      {
+        "title": "How IPL Changed Indian Cricket",
+        "image": "https://images.unsplash.com/photo-1565105421762-8699f947e86f?q=80&w=500&auto=format&fit=crop",
+        "duration": "18m",
+        "isNewEpisode": false,
+        "description": "A documentary-style look at how the Indian Premier League transformed cricket culture, talent discovery, and viewership globally."
+      },
+      {
+        "title": "The Rise of Shubman Gill",
+        "image": "https://images.unsplash.com/photo-1547941126-3d5322b218b0?q=80&w=500&auto=format&fit=crop",
+        "duration": "9m",
+        "isNewEpisode": false,
+        "description": "From Punjab U-19 to the Gujarat Titans captain — Shubman Gill's incredible journey to the top of Indian cricket."
+      }
+    ]
+  },
+  
+  {
+    "id": "top-10-india",
+    "title": "Top 10 in India Today",
+    "orientation": "vertical",
+    "items": [
+      {
+        "title": "Rajasaar",
+        "image": "https://images.unsplash.com/photo-1440407876336-62333a6f010f?q=80&w=400&auto=format&fit=crop",
+        "duration": "2h 5m",
+        "description": "A historical epic about a brave warrior who defies all odds to protect his kingdom from powerful foreign invaders."
+      },
+      {
+        "title": "Kis Kisko Pyaar Karoon",
+        "image": "https://images.unsplash.com/photo-1533158326339-7f3cf2404354?q=80&w=400&auto=format&fit=crop",
+        "duration": "2h 10m",
+        "description": "A hilarious comedy of errors as a man tries to manage his multiple relationships while keeping them all a secret."
+      },
+      {
+        "title": "Zootopia 2",
+        "image": "https://images.unsplash.com/photo-1588661706680-2dca1fbdc2dd?q=80&w=400&auto=format&fit=crop",
+        "duration": "1h 50m",
+        "description": "Judy Hopps and Nick Wilde return for another adventure in the incredible animal city of Zootopia."
+      },
+      {
+        "title": "Doraemon: The Movie",
+        "image": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=400&auto=format&fit=crop",
+        "duration": "1h 35m",
+        "description": "The beloved robot cat Doraemon and Nobita embark on a brand new magical adventure beyond time and space."
+      },
+      {
+        "title": "Shinchan: New Movie",
+        "image": "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=400&auto=format&fit=crop",
+        "duration": "1h 30m",
+        "description": "Crayon Shin-chan and his friends find themselves in the middle of a wild adventure full of laughs and surprises."
+      },
+      {
+        "title": "Thor: Love and Thunder",
+        "image": "https://images.unsplash.com/photo-1608889175123-8ee362201f81?q=80&w=400&auto=format&fit=crop",
+        "duration": "1h 58m",
+        "description": "Thor enlists the help of Valkyrie, Korg and ex-girlfriend Jane Foster to fight Gorr the God Butcher."
+      }
+    ]
+  },
+  {
+    "id": "mtv-splitsvilla",
+    "title": "MTV Splitsvilla X6 - Xtradose",
+    "orientation": "horizontal",
+    "items": [
+      {
+        "title": "Ruru's Mission Love",
+        "image": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=500&auto=format&fit=crop",
+        "duration": "18m",
+        "description": "Ruru takes on a daring mission to prove her connection with her partner as the competition heats up in the villa."
+      },
+      {
+        "title": "Behind The Villa: Red Flag Fun",
+        "image": "https://images.unsplash.com/photo-1555617786-9acab445a557?q=80&w=500&auto=format&fit=crop",
+        "duration": "30m",
+        "description": "Go behind the scenes of Splitsvilla and witness the dramatic, unfiltered moments that didn't make the final cut."
+      },
+      {
+        "title": "Elvish's Splitsvilla Fairy Tale",
+        "image": "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=500&auto=format&fit=crop",
+        "duration": "38m",
+        "description": "Follow Elvish Yadav's journey through the biggest moments on Splitsvilla X6 in this exclusive montage special."
+      },
+      {
+        "title": "Red Flag Winners Meet Elvish!",
+        "image": "https://images.unsplash.com/photo-1574682716301-447a1db3ceb4?q=80&w=500&auto=format&fit=crop",
+        "duration": "12m",
+        "isNewEpisode": true,
+        "description": "The winners of the Red Flag challenge get an exclusive meet-and-greet with host Elvish Yadav. Drama guaranteed!"
+      },
+      {
+        "title": "The Final Verdict",
+        "image": "https://images.unsplash.com/photo-1529543544282-ea669407fca3?q=80&w=500&auto=format&fit=crop",
+        "duration": "45m",
+        "description": "The ultimate finale of Splitsvilla X6 — who will be crowned the ideal match? The most explosive episode of the season."
+      }
+    ]
+  },
+  {
+    "id": "mtv-shows",
+    "title": "MTV Shows",
+    "orientation": "horizontal",
+    "items": [
+      {
+        "title": "Roadies",
+        "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=500&auto=format&fit=crop",
+        "duration": "42m",
+        "description": "India's most iconic adventure reality show returns with brand new tasks, drama and a fresh crop of contestants."
+      },
+      {
+        "title": "Hustle",
+        "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=500&auto=format&fit=crop",
+        "duration": "35m",
+        "description": "Budding rappers compete in intense rap battles judged by India's biggest hip-hop artists to earn a record deal."
+      },
+      {
+        "title": "Splitsvilla",
+        "image": "https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=500&auto=format&fit=crop",
+        "duration": "50m",
+        "description": "India's most thrilling dating reality show where singles find their ideal match or face brutal elimination."
+      },
+      {
+        "title": "Troll Police",
+        "image": "https://images.unsplash.com/photo-1498644026365-d4fcb2b9bb68?q=80&w=500&auto=format&fit=crop",
+        "duration": "28m",
+        "description": "Celebrities confront their worst online trolls live on air in this explosive and cathartic reality format."
+      },
+      {
+        "title": "Love School",
+        "image": "https://images.unsplash.com/photo-1542206395-9feb3edaa68d?q=80&w=500&auto=format&fit=crop",
+        "duration": "40m",
+        "description": "Couples in troubled relationships attend a relationship school to learn how to love each other all over again."
+      }
+    ]
+  }
+]
