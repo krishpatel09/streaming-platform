@@ -3,10 +3,15 @@
 import Image from "next/image";
 import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/authStore";
+import { AuthDialog } from "@/components/auth/AuthDialog";
 
 export default function MyPage() {
+  const { setOpen } = useAuthStore();
+
   return (
     <div className="relative min-h-[calc(100vh-0px)] w-full overflow-hidden bg-[#0f1014] flex flex-col items-center justify-center">
+      <AuthDialog />
       {/* ─── Background Glow / Cosmic Aesthetic ─── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden h-full w-full">
         {/* Subtle top-right glow matching the Help button location */}
@@ -55,7 +60,10 @@ export default function MyPage() {
         </div>
 
         {/* Log In Button (Premium Variant) */}
-        <Button className="group relative h-12 w-full max-w-[280px] bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold text-base rounded-lg transition-all shadow-[0_8px_32px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_48px_rgba(59,130,246,0.4)] active:scale-95 cursor-pointer tracking-wide overflow-hidden">
+        <Button 
+          onClick={() => setOpen(true)}
+          className="group relative h-12 w-full max-w-[280px] bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold text-base rounded-lg transition-all shadow-[0_8px_32px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_48px_rgba(59,130,246,0.4)] active:scale-95 cursor-pointer tracking-wide overflow-hidden"
+        >
           <span className="relative z-10">Log In</span>
         </Button>
 

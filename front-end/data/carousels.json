@@ -48,7 +48,50 @@
       }
     ]
   },
-  
+  {
+    "id": "new-on-jiohotstar",
+    "title": "New on JioHotstar",
+    "orientation": "vertical",
+    "items": [
+      {
+        "title": "The Bravest",
+        "image": "https://images.unsplash.com/photo-1574682716301-447a1db3ceb4?q=80&w=400&auto=format&fit=crop",
+        "duration": "1h 52m",
+        "description": "A gripping action thriller about elite firefighters who risk everything to save lives in the most dangerous conditions."
+      },
+      {
+        "title": "Seventh Son",
+        "image": "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=400&auto=format&fit=crop",
+        "duration": "1h 42m",
+        "description": "A young apprentice must battle against witches, beasts and sorcerers when the seventh son of a seventh son is recruited."
+      },
+      {
+        "title": "The Society",
+        "image": "https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=400&auto=format&fit=crop",
+        "duration": "2 Seasons",
+        "isNewEpisode": true,
+        "description": "When a group of teenagers are mysteriously transported to a perfect replica of their town without any adults, they must figure out how to survive."
+      },
+      {
+        "title": "Hijack 1971",
+        "image": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=400&auto=format&fit=crop",
+        "duration": "1h 48m",
+        "description": "Based on the true story of the dramatic hijacking of Indian Airlines Flight 814 during the 1971 war."
+      },
+      {
+        "title": "Tara",
+        "image": "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=400&auto=format&fit=crop",
+        "duration": "3 Seasons",
+        "description": "A dramatic family saga set in rural Rajasthan, following the journey of a determined young woman named Tara."
+      },
+      {
+        "title": "Rajasaar",
+        "image": "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?q=80&w=400&auto=format&fit=crop",
+        "duration": "2h 5m",
+        "description": "A historical epic about a brave warrior who defies all odds to protect his kingdom from powerful invaders."
+      }
+    ]
+  },
   {
     "id": "top-10-india",
     "title": "Top 10 in India Today",

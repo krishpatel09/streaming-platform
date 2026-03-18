@@ -25,6 +25,34 @@ CREATE TABLE refresh_tokens (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+
+-- NEW Table: profiles (The "My Space" multi-profile feature)
+CREATE TABLE profiles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    profile_name VARCHAR(50) NOT NULL,
+    avatar_url TEXT,
+    is_kids_profile BOOLEAN DEFAULT false,
+    is_primary BOOLEAN DEFAULT FALSE,
+    pin_code_hash VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT one_primary_profile_per_user UNIQUE (user_id) WHERE (is_primary = TRUE)
+);
+
+-- -- Table: user_preferences (Now linked to individual PROFILES)
+CREATE TABLE user_preferences (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    preferred_genres TEXT[],
+    preferred_languages TEXT[],
+    autoplay_next BOOLEAN DEFAULT true,
+    default_video_quality VARCHAR(10) DEFAULT 'auto',
+    email_notifications BOOLEAN DEFAULT true,
+    push_notifications BOOLEAN DEFAULT true,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+
 -- Table: oauth_providers (Social logins for the Account)
 -- CREATE TABLE oauth_providers (
 --     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -36,31 +64,3 @@ CREATE TABLE refresh_tokens (
 --     token_expires_at TIMESTAMPTZ,
 --     created_at TIMESTAMPTZ DEFAULT NOW()
 -- );
-
--- NEW Table: profiles (The "My Space" multi-profile feature)
--- CREATE TABLE profiles (
---     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
---     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
---     profile_name VARCHAR(50) NOT NULL,
---     avatar_url TEXT,
---     is_kids_profile BOOLEAN DEFAULT false,
---     is_primary BOOLEAN DEFAULT FALSE,
---     pin_code_hash VARCHAR(255),
---     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
---     CONSTRAINT one_primary_profile_per_user UNIQUE (user_id) WHERE (is_primary = TRUE)
--- );
-
--- -- Table: user_preferences (Now linked to individual PROFILES)
--- CREATE TABLE user_preferences (
---     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
---     profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
---     preferred_genres TEXT[],
---     preferred_languages TEXT[],
---     autoplay_next BOOLEAN DEFAULT true,
---     default_video_quality VARCHAR(10) DEFAULT 'auto',
---     email_notifications BOOLEAN DEFAULT true,
---     push_notifications BOOLEAN DEFAULT true,
---     updated_at TIMESTAMPTZ DEFAULT NOW()
--- );
-
-
