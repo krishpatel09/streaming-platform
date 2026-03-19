@@ -11,21 +11,26 @@ import (
 func NewRouter(h *handler.AuthHandler, uh *handler.UserHandler) *gin.Engine {
 	r := gin.Default()
 
+	// CORS Middleware
+	r.Use(middleware.CORSMiddleware())
+
 	r.GET("/health", func(c *gin.Context) {
+
 		c.JSON(http.StatusOK, gin.H{
 			"service": "auth-service",
 			"status":  "Ok",
 		})
 	})
 
-	auth := r.Group("/auth")
+	apiV1 := r.Group("/api/v1")
 	{
-		auth.POST("/api/register", h.Register)
-		auth.POST("/api/login", h.Login)
-		auth.POST("/api/verify-otp", h.VerifyOTP)
-		auth.POST("/api/resend-otp", h.ResendOTP)
-		auth.POST("/api/refresh-token", h.RefreshToken)
-		auth.POST("/api/logout", h.Logout)
+		auth := apiV1.Group("/auth")
+		{
+			auth.POST("/send-otp", h.SendOTP)
+			auth.POST("/verify-otp", h.VerifyOTP)
+			auth.POST("/refresh", h.RefreshToken)
+			auth.POST("/logout", h.Logout)
+		}
 	}
 
 	user := r.Group("/user")

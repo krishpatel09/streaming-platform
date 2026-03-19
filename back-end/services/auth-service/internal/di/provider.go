@@ -5,6 +5,7 @@ import (
 	"os"
 
 	email "github.com/krishpatel09/streaming-platform/services/auth-service/internal/utils/emails"
+	sms "github.com/krishpatel09/streaming-platform/services/auth-service/internal/utils/phone_number"
 )
 
 func ProvideEmailSender() *email.EmailSender {
@@ -21,6 +22,14 @@ func ProvideEmailSender() *email.EmailSender {
 	}
 
 	return email.NewEmailSender(apiKey, fromEmail)
+}
+
+func ProvideSMSSender() *sms.SMSSender {
+	apiKey := os.Getenv("FAST2SMS_API_KEY")
+	if apiKey == "" {
+		fmt.Println("FAST2SMS_API_KEY is not set in environment variables")
+	}
+	return sms.NewSMSSender(apiKey)
 }
 
 func ProvideSecretKey() string {

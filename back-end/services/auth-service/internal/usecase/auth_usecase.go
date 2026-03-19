@@ -2,286 +2,220 @@ package usecase
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
-
-	"github.com/google/uuid"
 
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/domain"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/repository"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/utils"
 	email "github.com/krishpatel09/streaming-platform/services/auth-service/internal/utils/emails"
+	sms "github.com/krishpatel09/streaming-platform/services/auth-service/internal/utils/phone_number"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/utils/response"
 )
 
 type AuthUseCase interface {
-	Register(req domain.RegisterRequest) (*domain.UserResponse, error)
-	Login(req domain.LoginRequest) (*domain.AuthResponse, error)
+	SendOTP(req domain.SendOTPRequest) error
 	VerifyOTP(req domain.VerifyOTPRequest) (*domain.AuthResponse, error)
-	ResendOTP(req domain.ResendOTPRequest) (*domain.AuthResponse, error)
 	RefreshToken(req domain.RefreshTokenRequest) (*domain.AuthResponse, error)
 	Logout(token string) error
 }
 
 type authUseCase struct {
 	repo      repository.UserRepository
+	otpRepo   repository.OTPRepository
 	redisRepo repository.RedisRepository
 	tokenRepo repository.RefreshTokenRepository
 	emailUtil *email.EmailSender
+	smsUtil   *sms.SMSSender
 	secretKey string
 }
 
 func NewAuthUseCase(
 	repo repository.UserRepository,
+	otpRepo repository.OTPRepository,
 	redisRepo repository.RedisRepository,
 	tokenRepo repository.RefreshTokenRepository,
 	emailUtil *email.EmailSender,
+	smsUtil *sms.SMSSender,
 	secretKey string,
 ) AuthUseCase {
 	return &authUseCase{
 		repo:      repo,
+		otpRepo:   otpRepo,
 		redisRepo: redisRepo,
 		tokenRepo: tokenRepo,
 		emailUtil: emailUtil,
+		smsUtil:   smsUtil,
 		secretKey: secretKey,
 	}
 }
 
-func (s *authUseCase) Register(req domain.RegisterRequest) (*domain.UserResponse, error) {
-	_, err := s.repo.FindByEmail(req.Email)
-	if err == nil {
-		return nil, response.EmailAlreadyExists()
+func (s *authUseCase) SendOTP(req domain.SendOTPRequest) error {
+	count, err := s.otpRepo.CountLast10Mins(req.Identifier)
+	if err == nil && count >= 3 {
+		return response.BadRequest("too many otp requests. please try again later")
 	}
-
-	hashedPassword, err := utils.HashPassword(req.Password)
+	user, err := s.repo.FindByIdentifier(req.Identifier, req.IdentifierType)
 	if err != nil {
-		return nil, err
-	}
+		user = &domain.User{
+			IsActive: true,
+		}
+		if req.IdentifierType == "email" {
+			user.Email = &req.Identifier
+		} else {
+			user.PhoneNumber = &req.Identifier
+		}
 
-	user := &domain.User{
-		ID:       uuid.New(),
-		Username: req.Username,
-		Email:    req.Email,
-		Password: hashedPassword,
-	}
-
-	if err := s.repo.Create(user); err != nil {
-		return nil, err
+		if err := s.repo.Create(user); err != nil {
+			return response.GeneralError(err)
+		}
 	}
 
 	otp := utils.GenerateOTP()
+	otpHash := utils.HashOTP(otp)
+
+	otpVerif := &domain.OTPVerification{
+		Identifier:     req.Identifier,
+		IdentifierType: req.IdentifierType,
+		OTPHash:        otpHash,
+		Purpose:        req.Purpose,
+		ExpiresAt:      time.Now().Add(5 * time.Minute),
+	}
+	if err := s.otpRepo.Create(otpVerif); err != nil {
+		return response.GeneralError(err)
+	}
 
 	go func() {
-		if err := s.emailUtil.SendOTP(user.Email, otp); err != nil {
-			fmt.Printf("Email sending failed for %s: %v\n", user.Email, err)
+		if req.IdentifierType == "email" {
+			if err := s.emailUtil.SendOTP(req.Identifier, otp); err != nil {
+				fmt.Printf("error: failed to send email otp: %v\n", err)
+			}
+		} else {
+			if err := s.smsUtil.SendOTP(req.Identifier, otp); err != nil {
+				fmt.Printf("error: failed to send sms otp: %v\n", err)
+			}
 		}
 	}()
 
-	if err := s.redisRepo.SetOTP(user.Email, otp, 5*time.Minute); err != nil {
-		return nil, response.GeneralError(err)
-	}
-
-	return &domain.UserResponse{
-		ID:       user.ID,
-		Username: user.Username,
-		Email:    user.Email,
-	}, nil
+	return nil
 }
 
 func (s *authUseCase) VerifyOTP(req domain.VerifyOTPRequest) (*domain.AuthResponse, error) {
-	storedOTP, err := s.redisRepo.GetOTP(req.Email)
+	otpVerif, err := s.otpRepo.GetLatest(req.Identifier, "login")
 	if err != nil {
-		return nil, response.BadRequest("otp expired or invalid")
+		return nil, response.BadRequest("otp expired or not found")
 	}
 
-	if storedOTP != req.OTP {
+	if otpVerif.Attempts >= 5 {
+		return nil, response.BadRequest("max attempts reached. please request a new otp")
+	}
+
+	_ = s.otpRepo.IncrementAttempts(otpVerif.ID)
+
+	if utils.HashOTP(req.OTP) != otpVerif.OTPHash {
 		return nil, response.BadRequest("invalid otp")
 	}
 
-	user, err := s.repo.FindByEmail(req.Email)
+	_ = s.otpRepo.Delete(otpVerif.ID)
+
+	user, err := s.repo.FindByIdentifier(req.Identifier, req.IdentifierType)
 	if err != nil {
 		return nil, response.BadRequest("user not found")
 	}
+	_ = s.repo.UpdateVerificationStatus(req.Identifier, req.IdentifierType, true)
 
-	if err := s.repo.UpdateVerificationStatus(user.Email, true); err != nil {
-		return nil, response.GeneralError(err)
+	device := &domain.Device{
+		UserID:            user.ID,
+		DeviceFingerprint: req.DeviceFingerprint,
+		DeviceName:        req.DeviceName,
+		DeviceType:        req.DeviceType,
+		LastSeenAt:        &[]time.Time{time.Now()}[0],
 	}
-
-	if err := s.redisRepo.DeleteOTP(req.Email); err != nil {
-		fmt.Printf("failed to delete otp: %v\n", err)
+	if err := s.repo.UpsertDevice(device); err != nil {
+		fmt.Printf("warning: failed to upsert device: %v\n", err)
 	}
 
 	accessToken, refreshToken, err := utils.GenerateTokens(user.ID, s.secretKey)
 	if err != nil {
 		return nil, err
 	}
-
 	rfToken := &domain.RefreshToken{
-		ID:         uuid.New(),
-		UserID:     user.ID,
-		Token:      refreshToken,
-		DeviceInfo: req.DeviceInfo,
-		IPAddress:  req.IPAddress,
-		ExpiresAt:  time.Now().Add(time.Hour * 24 * 7),
+		UserID:         user.ID,
+		DeviceID:       &device.ID,
+		TokenHash:      utils.HashOTP(refreshToken),
+		SessionLabel:   req.DeviceName,
+		IPAddress:      "0.0.0.0",
+		ExpiresAt:      time.Now().Add(time.Hour * 24 * 30),
+		LastActivityAt: time.Now(),
 	}
 	if err := s.tokenRepo.Create(rfToken); err != nil {
 		return nil, response.GeneralError(err)
 	}
 
-	// 2. Cache it in Redis for rapid validation
-	if err := s.redisRepo.SetRefreshToken(refreshToken, user.ID.String(), time.Hour*24*7); err != nil {
-		fmt.Printf("Warning: Failed to cache refresh token in Redis: %v\n", err)
+	emailStr := ""
+	if user.Email != nil {
+		emailStr = *user.Email
 	}
 
 	return &domain.AuthResponse{
 		User: domain.UserResponse{
-			ID:         user.ID,
-			Username:   user.Username,
-			Email:      user.Email,
-			IsVerified: true,
+			ID:    user.ID,
+			Email: emailStr,
 		},
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+		ExpiresIn:    900,
 	}, nil
-}
 
-func (s *authUseCase) ResendOTP(req domain.ResendOTPRequest) (*domain.AuthResponse, error) {
-	user, err := s.repo.FindByEmail(req.Email)
-	if err != nil {
-		return nil, response.BadRequest("user not found")
-	}
-
-	if user.IsVerified {
-		return nil, response.BadRequest("email already verified")
-	}
-
-	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
-
-	if err := s.redisRepo.SetOTP(user.Email, otp, 5*time.Minute); err != nil {
-		return nil, response.GeneralError(err)
-	}
-
-	go func() {
-		if err := s.emailUtil.SendOTP(user.Email, otp); err != nil {
-			fmt.Printf("Email sending failed for %s: %v\n", user.Email, err)
-		}
-	}()
-
-	return &domain.AuthResponse{
-		User: domain.UserResponse{
-			ID:         user.ID,
-			Username:   user.Username,
-			Email:      user.Email,
-			IsVerified: user.IsVerified,
-		},
-	}, nil
-}
-
-func (s *authUseCase) Login(req domain.LoginRequest) (*domain.AuthResponse, error) {
-	user, err := s.repo.FindByEmail(req.Email)
-	if err != nil {
-		return nil, response.Unauthorized("invalid credentials")
-	}
-
-	if !utils.VerifyPassword(req.Password, user.Password) {
-		return nil, response.Unauthorized("invalid credentials")
-	}
-
-	accessToken, refreshToken, err := utils.GenerateTokens(user.ID, s.secretKey)
-	if err != nil {
-		return nil, err
-	}
-
-	rfToken := &domain.RefreshToken{
-		ID:         uuid.New(),
-		UserID:     user.ID,
-		Token:      refreshToken,
-		DeviceInfo: req.DeviceInfo,
-		IPAddress:  req.IPAddress,
-		ExpiresAt:  time.Now().Add(time.Hour * 24 * 7),
-	}
-	if err := s.tokenRepo.Create(rfToken); err != nil {
-		return nil, response.GeneralError(err)
-	}
-
-	// 2. Cache it in Redis for rapid validation
-	if err := s.redisRepo.SetRefreshToken(refreshToken, user.ID.String(), time.Hour*24*7); err != nil {
-		fmt.Printf("Warning: Failed to cache refresh token in Redis: %v\n", err)
-	}
-
-	return &domain.AuthResponse{
-		User: domain.UserResponse{
-			ID:         user.ID,
-			Username:   user.Username,
-			Email:      user.Email,
-			IsVerified: user.IsVerified,
-		},
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nil
 }
 
 func (s *authUseCase) RefreshToken(req domain.RefreshTokenRequest) (*domain.AuthResponse, error) {
-	var userID uuid.UUID
+	tokenHash := utils.HashOTP(req.RefreshToken)
 
-	// 1. Try to validate fast via Redis cache
-	userIdStr, err := s.redisRepo.GetRefreshToken(req.RefreshToken)
-	if err == nil {
-		userID, _ = uuid.Parse(userIdStr)
-	} else {
-		// 2. Fallback: Check PostgreSQL if missing from Redis
-		rt, err := s.tokenRepo.FindByToken(req.RefreshToken)
-		if err != nil {
-			return nil, response.Unauthorized("invalid or expired refresh token")
-		}
-		userID = rt.UserID
-	}
-
-	accessToken, refreshToken, err := utils.GenerateTokens(userID, s.secretKey)
+	rt, err := s.tokenRepo.FindByHash(tokenHash)
 	if err != nil {
-		return nil, err
+		return nil, response.Unauthorized("INVALID_REFRESH_TOKEN")
 	}
 
-	if err := s.tokenRepo.RevokeToken(req.RefreshToken); err != nil {
-		fmt.Printf("failed to revoke old token in db: %v\n", err)
+	if rt.ExpiresAt.Before(time.Now()) {
+		_ = s.tokenRepo.RevokeByHash(tokenHash)
+		return nil, response.Unauthorized("SESSION_EXPIRED")
 	}
-	_ = s.redisRepo.DeleteRefreshToken(req.RefreshToken)
 
-	newRFToken := &domain.RefreshToken{
-		ID:         uuid.New(),
-		UserID:     userID,
-		Token:      refreshToken,
-		DeviceInfo: req.DeviceInfo,
-		IPAddress:  req.IPAddress,
-		ExpiresAt:  time.Now().Add(time.Hour * 24 * 7),
+	// 4. Idle Check
+	idleLimit := 14 * 24 * time.Hour // default desktop
+	if rt.Device != nil {
+		switch rt.Device.DeviceType {
+		case "mobile":
+			idleLimit = 7 * 24 * time.Hour
+		case "desktop":
+			idleLimit = 14 * 24 * time.Hour
+		case "tablet":
+			idleLimit = 10 * 24 * time.Hour
+		case "tv":
+			idleLimit = 30 * 24 * time.Hour
+		}
 	}
-	if err := s.tokenRepo.Create(newRFToken); err != nil {
+
+	if time.Since(rt.LastActivityAt) > idleLimit {
+		if rt.Device == nil || !rt.Device.IsTrusted {
+			return nil, response.Unauthorized("REVERIFICATION_REQUIRED")
+		}
+	}
+
+	_ = s.tokenRepo.UpdateActivity(rt.ID)
+
+	accessToken, _, err := utils.GenerateTokens(rt.UserID, s.secretKey)
+	if err != nil {
 		return nil, response.GeneralError(err)
 	}
-
-	// Cache new token in Redis
-	if err := s.redisRepo.SetRefreshToken(refreshToken, userID.String(), time.Hour*24*7); err != nil {
-		fmt.Printf("Warning: Failed to cache refresh token in Redis: %v\n", err)
-	}
-
-	user, err := s.repo.FindByID(userID)
-	if err != nil {
-		return nil, response.BadRequest("user not found")
-	}
-
 	return &domain.AuthResponse{
-		User: domain.UserResponse{
-			ID:         user.ID,
-			Username:   user.Username,
-			Email:      user.Email,
-			IsVerified: user.IsVerified,
-		},
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken: accessToken,
+		ExpiresIn:   900,
 	}, nil
 }
 
 func (s *authUseCase) Logout(token string) error {
-	_ = s.redisRepo.DeleteRefreshToken(token) // Try to delete from cache
-	return s.tokenRepo.RevokeToken(token)     // Actually revoke in the master database
+	tokenHash := utils.HashOTP(token)
+	_ = s.redisRepo.DeleteRefreshToken(token)
+	return s.tokenRepo.RevokeByHash(tokenHash)
 }

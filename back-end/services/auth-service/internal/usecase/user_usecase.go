@@ -27,9 +27,15 @@ func (u *userUseCase) GetProfile(userID uuid.UUID) (*domain.UserResponse, error)
 		return nil, response.BadRequest("user not found")
 	}
 
+	emailStr := ""
+	if user.Email != nil {
+		emailStr = *user.Email
+	}
+
 	return &domain.UserResponse{
-		ID:       user.ID,
-		Username: user.Username,
-		Email:    user.Email,
+		ID:    user.ID,
+		Email: emailStr,
 	}, nil
 }
+
+

@@ -140,8 +140,9 @@ export function HeroBanner() {
         )}
 
         {/* Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/65 to-transparent z-10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent z-10" />
+        <div className="absolute inset-0 bg-linear-to-r from-black via-black/65 to-transparent z-10" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/90 via-transparent to-transparent z-10" />
+
       </div>
 
       <div

@@ -2,6 +2,8 @@ package utils
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
+	"fmt"
 	"io"
 )
 
@@ -16,4 +18,9 @@ func GenerateOTP() string {
 		b[i] = table[int(b[i])%len(table)]
 	}
 	return string(b)
+}
+
+func HashOTP(otp string) string {
+	hash := sha256.Sum256([]byte(otp))
+	return fmt.Sprintf("%x", hash)
 }

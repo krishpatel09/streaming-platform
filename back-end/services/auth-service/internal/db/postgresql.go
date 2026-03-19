@@ -20,11 +20,15 @@ func ConnectPostgres(cfg config.PostgresConfig) (*gorm.DB, error) {
 	}
 	fmt.Println("PostgreSQL Database Connected Successfully")
 
-	// if DB.Migrator().HasIndex(&domain.User{}, "idx_users_username") {
-	// 	DB.Migrator().DropIndex(&domain.User{}, "idx_users_username")
-	// }
+	// Enable pgcrypto for gen_random_uuid()
+	_ = DB.Exec("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
 
-	DB.AutoMigrate(&domain.User{}, &domain.RefreshToken{})
+	DB.AutoMigrate(
+		&domain.User{},
+		&domain.OTPVerification{},
+		&domain.Device{},
+		&domain.RefreshToken{},
+	)
 	return DB, nil
 
 }

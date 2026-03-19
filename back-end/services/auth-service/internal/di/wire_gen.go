@@ -24,6 +24,7 @@ func Initialize(cfg config.PostgresConfig, redisCfg config.RedisConfig) (*gin.En
 		return nil, err
 	}
 	userRepository := repository.NewUserRepository(gormDB)
+	otpRepository := repository.NewOTPRepository(gormDB)
 	client, err := db.ConnectRedis(redisCfg)
 	if err != nil {
 		return nil, err
@@ -31,8 +32,9 @@ func Initialize(cfg config.PostgresConfig, redisCfg config.RedisConfig) (*gin.En
 	redisRepository := repository.NewRedisRepository(client)
 	refreshTokenRepository := repository.NewRefreshTokenRepository(gormDB)
 	emailSender := ProvideEmailSender()
+	smsSender := ProvideSMSSender()
 	string2 := ProvideSecretKey()
-	authUseCase := usecase.NewAuthUseCase(userRepository, redisRepository, refreshTokenRepository, emailSender, string2)
+	authUseCase := usecase.NewAuthUseCase(userRepository, otpRepository, redisRepository, refreshTokenRepository, emailSender, smsSender, string2)
 	authHandler := handler.NewAuthHandler(authUseCase)
 	userUseCase := usecase.NewUserUseCase(userRepository)
 	userHandler := handler.NewUserHandler(userUseCase)
