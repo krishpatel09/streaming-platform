@@ -3,12 +3,9 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isAuth = request.cookies.get("is-auth")?.value === "true";
 
-  // Skip if already in a regional path or is a static asset
   if (
-    pathname.startsWith("/in/") ||
-    pathname.startsWith("/us/") ||
-    pathname.startsWith("/uk/") ||
     pathname === "/favicon.ico" ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api")
@@ -16,13 +13,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Detect country from headers (e.g., Cloudflare, Vercel)
-  const country = request.headers.get("x-vercel-ip-country") || "in"; // default to 'in'
-  const region = country.toLowerCase();
+  const authRoutes = ["/profile-selecter", "/mypage"];
+  const isAuthRoute = pathname === "/login";
 
-  // Redirect to /[region]/home if at root
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL(`/${region}/home`, request.url));
+  if (authRoutes.some((route) => pathname.startsWith(route)) && !isAuth) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (isAuthRoute && isAuth) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();

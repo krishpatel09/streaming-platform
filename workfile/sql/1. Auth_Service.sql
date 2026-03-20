@@ -5,7 +5,6 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE users (
     id               UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- username         VARCHAR(100),                        -- optional display name
     email            VARCHAR(255) UNIQUE,                 -- nullable — phone-only users OK
     phone_number     VARCHAR(20)  UNIQUE,                 -- nullable — email-only users OK
     phone_verified   BOOLEAN      NOT NULL DEFAULT FALSE,

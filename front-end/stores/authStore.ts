@@ -50,13 +50,17 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         identifier: "",
         identifierType: null,
 
-        setUser: (user) =>
+        setUser: (user) => {
           set((state) => ({
             ...state,
             user,
             isAuthenticated: true,
             error: null,
-          })),
+          }));
+          if (typeof window !== "undefined") {
+            document.cookie = "is-auth=true; path=/; max-age=604800";
+          }
+        },
 
         setActiveProfile: (profile) =>
           set((state) => ({
@@ -70,16 +74,20 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             tokens,
           })),
 
-        setAuth: (user, tokens) =>
+        setAuth: (user, tokens) => {
           set((state) => ({
             ...state,
             user,
             tokens,
             isAuthenticated: true,
             error: null,
-          })),
+          }));
+          if (typeof window !== "undefined") {
+            document.cookie = "is-auth=true; path=/; max-age=604800";
+          }
+        },
 
-        logout: () =>
+        logout: () => {
           set({
             user: null,
             activeProfile: null,
@@ -89,7 +97,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             step: "identify",
             identifier: "",
             identifierType: null,
-          }),
+          });
+          if (typeof window !== "undefined") {
+            document.cookie = "is-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          }
+        },
 
         setLoading: (loading) =>
           set((state) => ({
@@ -121,21 +133,25 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             step,
           })),
 
-        setIdentifier: (identifier, type) =>
+        setIdentifier: (identifier, type) => {
+          console.log(`[Store] Setting Identifier: ${identifier} (${type})`);
           set((state) => ({
             ...state,
             identifier,
             identifierType: type,
-          })),
+          }));
+        },
 
-        reset: () =>
+        reset: () => {
+          console.log("[Store] Resetting UI state");
           set((state) => ({
             ...state,
             step: "identify",
             identifier: "",
             identifierType: null,
             error: null,
-          })),
+          }));
+        },
       }),
       {
         name: "auth-storage",
@@ -144,8 +160,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           activeProfile: state.activeProfile,
           tokens: state.tokens,
           isAuthenticated: state.isAuthenticated,
+          identifier: state.identifier,
+          identifierType: state.identifierType,
         }),
       },
+
     ),
     { name: "AuthStore" },
   ),

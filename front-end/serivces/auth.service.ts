@@ -39,4 +39,17 @@ export const authService = {
   logout: async (): Promise<void> => {
     await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT);
   },
+
+  getSessions: async (): Promise<any[]> => {
+    const response = await apiClient.get<ApiResponse<any[]>>(
+      API_ENDPOINTS.AUTH.GET_SESSIONS,
+    );
+    return response.data.data;
+  },
+
+  revokeSession: async (id: string): Promise<void> => {
+    await apiClient.delete(
+      API_ENDPOINTS.AUTH.REVOKE_SESSION.replace(":id", id),
+    );
+  },
 };

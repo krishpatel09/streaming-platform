@@ -4,9 +4,11 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 
+import { useAuthStore } from "@/stores/authStore";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-function createApiClient(service?: string): AxiosInstance {
+function createApiClient(): AxiosInstance {
   const client = axios.create({
     baseURL: BASE_URL,
     timeout: 15000,
@@ -15,65 +17,96 @@ function createApiClient(service?: string): AxiosInstance {
 
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      if (typeof window !== "undefined") {
-        const raw = localStorage.getItem("auth-storage");
-        if (raw) {
-          try {
-            const { state } = JSON.parse(raw);
-            const token = state?.tokens?.accessToken;
+      let token = useAuthStore.getState().tokens?.accessToken;
+
+      // Fallback: If store is not yet hydrated, peek into localStorage
+      if (!token && typeof window !== "undefined") {
+        try {
+          const storage = localStorage.getItem("auth-storage");
+          if (storage) {
+            const parsed = JSON.parse(storage);
+            token = parsed.state?.tokens?.accessToken;
             if (token) {
-              config.headers.Authorization = `Bearer ${token}`;
+              console.log(
+                "[API Client] Using token from localStorage fallback (pre-hydration)",
+              );
             }
-          } catch (e) {
-            console.error("Error parsing auth storage", e);
           }
+        } catch (e) {
+          console.error("[API Client] Failed to peek into localStorage", e);
         }
       }
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      console.log(
+        `[API Request] ${config.method?.toUpperCase()} ${config.url}`,
+        { hasToken: !!token },
+      );
       return config;
     },
     (err) => Promise.reject(err),
   );
 
   client.interceptors.response.use(
-    (res) => res,
+    (res) => {
+      console.log(`[API Response] ${res.status} ${res.config.url}`);
+      return res;
+    },
     async (error) => {
       const original = error.config;
+      console.error(
+        `[API Error] ${error.response?.status} ${original.url}`,
+        error.response?.data,
+      );
+
       if (error.response?.status === 401 && !original._retry) {
         original._retry = true;
         try {
-          const raw = localStorage.getItem("auth-storage");
-          if (raw) {
-            const { state } = JSON.parse(raw);
-            const refreshToken = state?.tokens?.refreshToken;
+          const { tokens } = useAuthStore.getState();
+          const refreshToken = tokens?.refreshToken;
 
-            if (!refreshToken) throw new Error("No refresh token");
-
-            const { data } = await axios.post(
-              `${BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`,
-              {
-                refreshToken,
-              },
+          if (!refreshToken) {
+            console.warn(
+              "[API Refresh] No refresh token available, logging out...",
             );
-
-            const newAccessToken = data.data.accessToken;
-
-            // Update localStorage directly since we can't easily access the store here without circular deps
-            const newState = {
-              ...state,
-              tokens: { ...state.tokens, accessToken: newAccessToken },
-            };
-            localStorage.setItem(
-              "auth-storage",
-              JSON.stringify({ state: newState, version: 0 }),
-            );
-
-            original.headers.Authorization = `Bearer ${newAccessToken}`;
-            return axios(original);
+            throw new Error("No refresh token");
           }
-        } catch (refreshError) {
-          localStorage.removeItem("auth-storage");
+
+          console.log("[API Refresh] Attempting token refresh...");
+          const { data } = await axios.post(
+            `${BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`,
+            { refreshToken },
+          );
+
+          const newTokens = data.data;
+
+          if (newTokens.accessToken) {
+            console.log("[API Refresh] Success, updating store...");
+            useAuthStore.getState().setTokens(newTokens);
+          }
+
+          original.headers.Authorization = `Bearer ${newTokens.accessToken}`;
+          return axios(original);
+        } catch (refreshError: any) {
+          console.error(
+            "[API Refresh] Failed, performing logout redirect",
+            refreshError.message,
+          );
+          const { logout, identifier } = useAuthStore.getState();
+
+          logout();
+
           if (typeof window !== "undefined") {
-            window.location.href = "/login";
+            const errorMsg =
+              refreshError.response?.data?.message || "SESSION_EXPIRED";
+            const searchParams = new URLSearchParams();
+            if (identifier) searchParams.set("identifier", identifier);
+            searchParams.set("reverify", "true");
+            searchParams.set("reason", errorMsg);
+
+            window.location.href = `/login?${searchParams.toString()}`;
           }
           return Promise.reject(refreshError);
         }

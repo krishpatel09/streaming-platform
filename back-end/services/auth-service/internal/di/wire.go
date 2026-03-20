@@ -22,13 +22,17 @@ func Initialize(cfg config.PostgresConfig, redisCfg config.RedisConfig) (*gin.En
 		repository.NewOTPRepository,
 		repository.NewRedisRepository,
 		repository.NewRefreshTokenRepository,
+		repository.NewProfileRepository,
+		repository.NewSessionRepository,
 		ProvideEmailSender,
 		ProvideSMSSender,
 		ProvideSecretKey,
 		usecase.NewAuthUseCase,
 		usecase.NewUserUseCase,
+		usecase.NewProfileUseCase,
 		handler.NewAuthHandler,
 		handler.NewUserHandler,
+		handler.NewProfileHandler,
 		router.NewRouter,
 	)
 

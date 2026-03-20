@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/domain"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/usecase"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/utils/response"
@@ -97,4 +98,36 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.NewResponse(http.StatusOK, "logged out successfully", nil))
+}
+
+func (h *AuthHandler) GetSessions(c *gin.Context) {
+	userIDStr := c.GetString("user_id")
+	userID, _ := uuid.Parse(userIDStr)
+
+	sessions, err := h.svc.GetSessions(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.GeneralError(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.NewResponse(http.StatusOK, "ok", sessions))
+}
+
+func (h *AuthHandler) RevokeSession(c *gin.Context) {
+	userIDStr := c.GetString("user_id")
+	userID, _ := uuid.Parse(userIDStr)
+
+	sessionIDStr := c.Param("id")
+	sessionID, _ := uuid.Parse(sessionIDStr)
+
+	if err := h.svc.RevokeSession(userID, sessionID); err != nil {
+		if r, ok := err.(response.Response); ok {
+			c.JSON(r.StatusCode, r)
+			return
+		}
+		c.JSON(http.StatusInternalServerError, response.GeneralError(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.NewResponse(http.StatusOK, "session revoked", nil))
 }

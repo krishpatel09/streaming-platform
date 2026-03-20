@@ -7,15 +7,17 @@ import (
 )
 
 type User struct {
-	ID            uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Email         *string        `gorm:"type:varchar(255);uniqueIndex;where:email IS NOT NULL"`
-	PhoneNumber   *string        `gorm:"type:varchar(20);uniqueIndex;where:phone_number IS NOT NULL"`
-	IsVerified    bool           `gorm:"not null;default:false"`
-	IsActive      bool           `gorm:"not null;default:true"`
+	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Email         *string   `gorm:"type:varchar(255);uniqueIndex;where:email IS NOT NULL"`
+	PhoneNumber   *string   `gorm:"type:varchar(20);uniqueIndex;where:phone_number IS NOT NULL"`
+	PhoneVerified bool      `gorm:"not null;default:false"`
+	IsVerified    bool      `gorm:"not null;default:false"`
+	IsActive      bool      `gorm:"not null;default:true"`
 
 	CreatedAt     time.Time      `gorm:"not null;default:now()"`
 	UpdatedAt     time.Time      `gorm:"not null;default:now()"`
 	RefreshTokens []RefreshToken `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE"`
+	Profiles      []Profile      `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE"`
 }
 
 type OTPVerification struct {
@@ -50,11 +52,15 @@ type UserResponse struct {
 	Email    string    `json:"email"`
 }
 
+type AuthTokens struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	ExpiresIn    int    `json:"expiresIn"`
+}
+
 type AuthResponse struct {
-	AccessToken  string       `json:"accessToken,omitempty"`
-	RefreshToken string       `json:"refreshToken,omitempty"`
-	User         UserResponse `json:"user"`
-	ExpiresIn    int          `json:"expires_in"`
+	User   UserResponse `json:"user"`
+	Tokens AuthTokens   `json:"tokens"`
 }
 
 type RefreshTokenRequest struct {

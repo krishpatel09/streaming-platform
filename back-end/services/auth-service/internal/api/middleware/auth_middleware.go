@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -26,7 +27,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		tokenString := parts[1]
-		secretKey := os.Getenv("JWT_SECRET_KEY")
+		secretKey := os.Getenv("SECRET_KEY")
 		if secretKey == "" {
 			secretKey = "default_secret"
 		}
@@ -35,8 +36,16 @@ func AuthMiddleware() gin.HandlerFunc {
 			return []byte(secretKey), nil
 		})
 
-		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+		if err != nil {
+			fmt.Printf("[Auth] JWT Parse Error: %v\n", err)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token", "details": err.Error()})
+			c.Abort()
+			return
+		}
+
+		if !token.Valid {
+			fmt.Println("[Auth] Token is invalid")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
 		}

@@ -3,13 +3,34 @@ import { Check } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="w-full bg-[#0f1014] pt-16 pb-8 px-8 lg:px-16 text-zinc-400 font-medium">
-      <div className="flex flex-col md:flex-row justify-between gap-12 border-b border-zinc-800 pb-12">
-        <div className="flex flex-col md:flex-row gap-16 w-full lg:w-3/4">
+    <footer className="w-full bg-[#0f1014] pt-24 pb-12 px-8 lg:px-16 text-zinc-500 font-medium border-t border-zinc-900">
+      <div className="flex flex-col md:flex-row justify-between gap-12 border-b border-zinc-800/50 pb-16">
+        <div className="flex flex-col gap-8 w-full lg:w-1/4">
+            <Link href="/" className="flex items-center gap-1 group">
+                <span className="text-2xl font-black text-white tracking-tighter uppercase italic">
+                MOVI<span className="text-[#e50914] not-italic">X</span>.
+                </span>
+            </Link>
+            <p className="text-sm leading-relaxed max-w-xs">
+                Next-generation streaming platform for high-quality entertainment. Watch your favorite movies and shows anywhere, anytime.
+            </p>
+            <div className="flex gap-4">
+                {/* Social placeholders */}
+                {[1, 2, 3, 4].map(s => (
+                    <div key={s} className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#e50914] hover:border-[#e50914] transition-all cursor-pointer">
+                        <div className="w-3 h-3 bg-white rounded-full" />
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-16 w-full lg:w-3/4">
           <div className="space-y-4">
-            <h4 className="text-white font-bold text-lg mb-2">Company</h4>
-            <Link href="#" className="block hover:text-white transition-colors">About Us</Link>
-            <Link href="#" className="block hover:text-white transition-colors">Careers</Link>
+            <h4 className="text-white font-black text-xs uppercase tracking-[0.2em] mb-6">Navigation</h4>
+            <Link href="#" className="block hover:text-white transition-colors text-sm">Our services</Link>
+            <Link href="#" className="block hover:text-white transition-colors text-sm">About</Link>
+            <Link href="#" className="block hover:text-white transition-colors text-sm">Join us</Link>
+            <Link href="#" className="block hover:text-white transition-colors text-sm">Contact</Link>
           </div>
           
           <div className="space-y-4">

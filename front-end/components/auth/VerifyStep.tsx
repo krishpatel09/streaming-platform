@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { authService } from "@/serivces/auth.service";
 import { toast } from "sonner";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export function VerifyStep() {
   const { identifier, identifierType, setStep, setAuth, setOpen, reset } =
@@ -18,7 +18,6 @@ export function VerifyStep() {
   const [timer, setTimer] = useState(30);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { region } = useParams();
 
   useEffect(() => {
     if (timer > 0) {
@@ -46,8 +45,7 @@ export function VerifyStep() {
 
       setOpen(false);
 
-      const targetRegion = region || "in";
-      router.push(`/${targetRegion}/mypage`);
+      router.push(`/mypage`);
 
       setTimeout(reset, 500);
     } catch (error: any) {

@@ -4,36 +4,63 @@ import Image from "next/image";
 import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/authStore";
-import { AuthDialog } from "@/components/auth/AuthDialog";
+import { useProfileStore } from "@/stores/profileStore";
+import { ProfileSelection } from "@/components/auth/ProfileSelection";
+import { useRouter } from "next/navigation";
 
 export default function MyPage() {
   const { setOpen, isAuthenticated, user, logout } = useAuthStore();
+  const { currentProfile } = useProfileStore();
+  const router = useRouter();
 
   if (isAuthenticated) {
+    if (!currentProfile) {
+      return (
+        <div className="relative min-h-screen w-full bg-[#0f1014] flex flex-col items-center justify-center">
+          <ProfileSelection />
+        </div>
+      );
+    }
+
     return (
       <div className="relative min-h-screen w-full bg-[#0f1014] flex flex-col items-center justify-center p-8">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-500/5 rounded-full blur-[180px] -mr-96 -mt-96" />
         </div>
-        
+
         <div className="relative z-10 flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-700">
-          <div className="w-24 h-24 rounded-full bg-linear-to-tr from-blue-600 to-purple-600 flex items-center justify-center border-4 border-white/10 shadow-2xl">
-            <span className="text-3xl font-black text-white">{user?.fullName?.charAt(0)}</span>
+          <div className="w-24 h-24 rounded-full bg-linear-to-tr from-blue-600 to-purple-600 flex items-center justify-center border-4 border-white/10 shadow-2xl overflow-hidden">
+            {currentProfile.avatar_url ? (
+              <Image
+                src={currentProfile.avatar_url}
+                alt={currentProfile.profile_name}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <span className="text-3xl font-black text-white">
+                {currentProfile.profile_name.charAt(0)}
+              </span>
+            )}
           </div>
           <div className="text-center space-y-2">
-            <h1 className="text-4xl font-black text-white tracking-tight">Welcome Back!</h1>
-            <p className="text-zinc-400 font-medium">{user?.fullName}</p>
+            <h1 className="text-4xl font-black text-white tracking-tight">
+              Welcome, {currentProfile.profile_name}!
+            </h1>
+            <p className="text-zinc-400 font-medium tracking-wide">
+              Logged in with {user?.email || user?.phoneNumber}
+            </p>
           </div>
           <div className="flex gap-4 mt-4">
-            <Button 
-              className="bg-white text-black hover:bg-zinc-200 font-bold px-8 rounded-xl"
-              onClick={() => window.location.href = "/"}
+            <Button
+              className="bg-white text-black hover:bg-zinc-200 font-bold px-8 rounded-xl h-12 transition-all active:scale-95"
+              onClick={() => router.push("/")}
             >
               Go to Home
             </Button>
-            <Button 
-              variant="outline" 
-              className="border-white/10 text-white hover:bg-white/5 font-bold px-8 rounded-xl"
+            <Button
+              variant="outline"
+              className="border-white/10 text-white hover:bg-white/5 font-bold px-8 rounded-xl h-12 transition-all active:scale-95"
               onClick={logout}
             >
               Sign Out
@@ -46,7 +73,6 @@ export default function MyPage() {
 
   return (
     <div className="relative min-h-[calc(100vh-0px)] w-full overflow-hidden bg-[#0f1014] flex flex-col items-center justify-center">
-      <AuthDialog />
       <div className="absolute inset-0 pointer-events-none overflow-hidden h-full w-full">
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-indigo-500/5 rounded-full blur-[180px] -mr-96 -mt-96" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.03)_0%,transparent_70%)]" />
@@ -77,12 +103,13 @@ export default function MyPage() {
             Login to StreamVerse
           </h1>
           <p className="text-[14px] leading-[20px] font-medium text-zinc-400 max-w-[400px] mx-auto">
-            Start watching from where you left off, personalise for kids and more
+            Start watching from where you left off, personalise for kids and
+            more
           </p>
         </div>
 
         <Button
-          onClick={() => setOpen(true)}
+          onClick={() => router.push("/login")}
           className="group relative h-12 w-full max-w-[280px] bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold text-base rounded-lg transition-all shadow-[0_8px_32px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_48px_rgba(59,130,246,0.4)] active:scale-95 cursor-pointer tracking-wide overflow-hidden"
         >
           <span className="relative z-10">Log In</span>

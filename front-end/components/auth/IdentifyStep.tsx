@@ -1,16 +1,33 @@
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import { ChevronRight, Loader2 } from "lucide-react";
 import { authService } from "@/serivces/auth.service";
 import { toast } from "sonner";
 
+import { useSearchParams } from "next/navigation";
 
 export function IdentifyStep() {
   const { setStep, setIdentifier } = useAuthStore();
-  const [value, setValue] = useState("");
+  const searchParams = useSearchParams();
+  const [value, setValue] = useState(searchParams.get("identifier") || "");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const reverify = searchParams.get("reverify");
+    const reason = searchParams.get("reason");
+    const id = searchParams.get("identifier");
+
+    if (reverify === "true" && reason && id) {
+      toast.info(
+        reason === "SESSION_EXPIRED"
+          ? "Your session has expired. Please verify to continue."
+          : "Security check: Please verify your identity.",
+      );
+    }
+  }, [searchParams]);
 
   const handleContinue = async () => {
     if (!value) return;
@@ -30,7 +47,6 @@ export function IdentifyStep() {
       setIsLoading(false);
     }
   };
-
 
   return (
     <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-right-4 duration-500">

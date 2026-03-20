@@ -12,11 +12,11 @@ export interface User {
 
 export interface Profile {
   id: string;
-  userId: string;
-  name: string;
-  avatar?: string;
-  isMain: boolean;
-  pin?: string;
-  language: string;
-  maturityRating: string;
+  user_id: string;
+  profile_name: string;
+  avatar_url?: string;
+  is_kids_profile: boolean;
+  is_primary: boolean;
+  pin_code_hash?: string;
+  created_at: string;
 }

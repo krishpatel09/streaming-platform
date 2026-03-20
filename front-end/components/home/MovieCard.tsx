@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Play, Plus, Info, ChevronDown } from "lucide-react";
-import { cn } from "@/utils/utils";
+import { cn } from "@/lib/utils";
 
 interface MovieCardProps {
   title: string;

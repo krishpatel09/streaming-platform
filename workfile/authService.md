@@ -1,54 +1,68 @@
-# Auth Service: How It Works
+# Auth Service: Flow & Data Storage
 
-The **Auth Service** is a dedicated microservice responsible for managing user identity, authentication, and secure access to the Streaming Platform. It sits at the front of the platform's security layer.
-
-## 🏗️ Architecture & Component Flow
-
-The service follows a **Clean Architecture** pattern, separating concerns into logical layers:
-
-### 1. The Entry Point (`cmd/main.go`)
-- **Config Loading**: Reads database (PostgreSQL) and cache (Redis) settings from environment variables.
-- **Dependency Injection**: Uses `wire.go` to connect the database to the repositories, repositories to services, and services to API handlers.
-- **Server Initialization**: Starts the Gin engine on a specified port (default `50051`).
-
-### 2. API & Routing Layer (`internal/api/`)
-- **Router** (`router/router.go`): Maps URL paths to specific handler functions.
-  - `/auth/register` (POST): Open for new users.
-  - `/auth/login` (POST): Open for existing users.
-  - `/auth/me` (GET): Protected; requires a valid token.
-- **Middleware** (`middleware.go`): The "Guard". It intercepts every request to protected routes.
-  - Checks for the `Authorization: Bearer <token>` header.
-  - Decodes and validates the **JWT** (JSON Web Token).
-  - Extracts the `user_id` and attaches it to the request context for the handlers to use.
-
-### 3. Business Logic Layer (`internal/service/`)
-- **Registration**:
-  - Checks if the email is already taken.
-  - Uses `bcrypt` to hash the password (so we never store plain-text passwords).
-  - Saves the new user and returns a freshly generated JWT.
-- **Login**:
-  - Finds the user by email.
-  - Compares the provided password with the stored hash.
-  - If they match, it issues a signed JWT.
-- **Profile**:
-  - Retrieves user details (Username, Email, Verification status) using the ID provided by the middleware.
-
-### 4. Data Layer (`internal/repository/`)
-- Uses **GORM** to communicate with **PostgreSQL**.
-- Handles raw database operations like `Create`, `FindByID`, and `FindByEmail`.
+This document explains how the authentication process works and how data is stored across different tables at each step.
 
 ---
 
-## 🔐 Security Standards
+## 🚀 1. The Login Flow (OTP Based)
 
-- **JWT (JSON Web Tokens)**: Used for stateless authentication. Once a user logs in, the client sends this token with every subsequent request.
-- **Password Salting/Hashing**: Implemented via `golang.org/x/crypto/bcrypt` to ensure maximum security for user credentials.
-- **Contextual Safety**: User IDs are passed through the request context, preventing users from accessing data they don't own.
+### Step A: Send OTP
+**Action**: User enters email/phone.
+**Logic**:
+1. Check **`otp_verifications`** table for rate limits (max 3 in 10 mins).
+2. Lookup **`users`** table. If it's a new identifier, **INSERT** a new user record.
+3. Generate 6-digit OTP, SHA-256 hash it.
+4. **INSERT** into **`otp_verifications`** with `expires_at` (5 mins).
 
-## 🛠️ Typical Request Flow (e.g., "Get My Profile")
+### Step B: Verify OTP
+**Action**: User enters the 6-digit code.
+**Logic**:
+1. **UPDATE** `attempts` in **`otp_verifications`** (prevents race conditions).
+2. Compare input hash with stored hash.
+3. On Success: **DELETE** the OTP row.
+4. **UPSERT** into **`devices`**:
+   - If `device_fingerprint` exists, update `last_seen_at`.
+   - Else, create a new device entry for this user.
+5. **INSERT** into **`refresh_tokens`**:
+   - Create a long-lived session (30 days).
+   - Link it to the `device_id`.
+6. **INSERT** into **`session_activity`**:
+   - Log `action = 'otp_verified'`.
 
-1. **Client** calls `GET /auth/me` with a JWT in the header.
-2. **Middleware** verifies the token. If valid, it attaches `user_id` to the context and lets the request continue.
-3. **Handler** (`GetProfile`) reads the `user_id` from the context and asks the **Service**.
-4. **Service** asks the **Repository** to fetch user data from **Postgres**.
-5. **Response**: The user's profile is sent back as JSON.
+---
+
+## 🔄 2. Token Refresh & Idle Session Management
+
+### The Refresh Request
+**Action**: Client sends `refresh_token` to get a new `access_token`.
+**Logic**:
+1. Lookup **`refresh_tokens`** by `token_hash`.
+2. check `revoked_at` and `expires_at`.
+3. **Idle Check**:
+   - Compare `last_activity_at` with device-specific limits (e.g., 14 days for desktop).
+   - If exceeded: Check **`otp_bypass`** for "Trusted Device" status.
+   - If trusted: Slide `last_activity_at` forward.
+   - If NOT trusted: Return `REVERIFICATION_REQUIRED`.
+4. **UPDATE** **`refresh_tokens`**:
+   - Set `last_activity_at = NOW()`.
+5. **INSERT** into **`session_activity`**:
+   - Log `action = 'token_refresh'`.
+
+---
+
+## 🗃️ 3. How Tables Store Data (Visual Trace)
+
+| Event | `users` | `profiles` | `devices` | `refresh_tokens` |
+| :--- | :--- | :--- | :--- | :--- |
+| **New Registration** | New row created | "Primary" profile created | - | - |
+| **First Login** | `is_verified` → true | - | New device record | New session record |
+| **Switch Profile** | - | `activeProfile` updated (Frontend) | - | - |
+| **New Device Login** | - | - | 2nd device record | 2nd independent session |
+| **Logout** | - | - | - | Set `revoked_at` |
+
+---
+
+## 🔑 4. Why This Architecture?
+- **Stateless Access**: Users use a short-lived **JWT (15 mins)** for requests.
+- **Stateful Sessions**: Refresh tokens are stored in the DB so we can **instantly revoke** a stolen device or "Logout of all devices".
+- **Privacy**: We never store the actual OTP or Password—only **SHA-256 or Bcrypt hashes**.

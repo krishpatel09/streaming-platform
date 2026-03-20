@@ -31,13 +31,17 @@ func Initialize(cfg config.PostgresConfig, redisCfg config.RedisConfig) (*gin.En
 	}
 	redisRepository := repository.NewRedisRepository(client)
 	refreshTokenRepository := repository.NewRefreshTokenRepository(gormDB)
+	profileRepository := repository.NewProfileRepository(gormDB)
+	sessionRepository := repository.NewSessionRepository(gormDB)
 	emailSender := ProvideEmailSender()
 	smsSender := ProvideSMSSender()
 	string2 := ProvideSecretKey()
-	authUseCase := usecase.NewAuthUseCase(userRepository, otpRepository, redisRepository, refreshTokenRepository, emailSender, smsSender, string2)
+	authUseCase := usecase.NewAuthUseCase(userRepository, otpRepository, redisRepository, refreshTokenRepository, profileRepository, sessionRepository, emailSender, smsSender, string2)
 	authHandler := handler.NewAuthHandler(authUseCase)
 	userUseCase := usecase.NewUserUseCase(userRepository)
 	userHandler := handler.NewUserHandler(userUseCase)
-	engine := router.NewRouter(authHandler, userHandler)
+	profileUseCase := usecase.NewProfileUseCase(profileRepository)
+	profileHandler := handler.NewProfileHandler(profileUseCase)
+	engine := router.NewRouter(authHandler, userHandler, profileHandler)
 	return engine, nil
 }

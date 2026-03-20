@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/domain"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/repository"
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/utils"
@@ -17,16 +18,20 @@ type AuthUseCase interface {
 	VerifyOTP(req domain.VerifyOTPRequest) (*domain.AuthResponse, error)
 	RefreshToken(req domain.RefreshTokenRequest) (*domain.AuthResponse, error)
 	Logout(token string) error
+	GetSessions(userID uuid.UUID) ([]domain.RefreshToken, error)
+	RevokeSession(userID, sessionID uuid.UUID) error
 }
 
 type authUseCase struct {
-	repo      repository.UserRepository
-	otpRepo   repository.OTPRepository
-	redisRepo repository.RedisRepository
-	tokenRepo repository.RefreshTokenRepository
-	emailUtil *email.EmailSender
-	smsUtil   *sms.SMSSender
-	secretKey string
+	repo        repository.UserRepository
+	otpRepo     repository.OTPRepository
+	redisRepo   repository.RedisRepository
+	tokenRepo   repository.RefreshTokenRepository
+	profileRepo repository.ProfileRepository
+	sessionRepo repository.SessionRepository
+	emailUtil   *email.EmailSender
+	smsUtil     *sms.SMSSender
+	secretKey   string
 }
 
 func NewAuthUseCase(
@@ -34,18 +39,22 @@ func NewAuthUseCase(
 	otpRepo repository.OTPRepository,
 	redisRepo repository.RedisRepository,
 	tokenRepo repository.RefreshTokenRepository,
+	profileRepo repository.ProfileRepository,
+	sessionRepo repository.SessionRepository,
 	emailUtil *email.EmailSender,
 	smsUtil *sms.SMSSender,
 	secretKey string,
 ) AuthUseCase {
 	return &authUseCase{
-		repo:      repo,
-		otpRepo:   otpRepo,
-		redisRepo: redisRepo,
-		tokenRepo: tokenRepo,
-		emailUtil: emailUtil,
-		smsUtil:   smsUtil,
-		secretKey: secretKey,
+		repo:        repo,
+		otpRepo:     otpRepo,
+		redisRepo:   redisRepo,
+		tokenRepo:   tokenRepo,
+		profileRepo: profileRepo,
+		sessionRepo: sessionRepo,
+		emailUtil:   emailUtil,
+		smsUtil:     smsUtil,
+		secretKey:   secretKey,
 	}
 }
 
@@ -71,6 +80,7 @@ func (s *authUseCase) SendOTP(req domain.SendOTPRequest) error {
 	}
 
 	otp := utils.GenerateOTP()
+	fmt.Println("otp: ", otp)
 	otpHash := utils.HashOTP(otp)
 
 	otpVerif := &domain.OTPVerification{
@@ -131,7 +141,12 @@ func (s *authUseCase) VerifyOTP(req domain.VerifyOTPRequest) (*domain.AuthRespon
 		LastSeenAt:        &[]time.Time{time.Now()}[0],
 	}
 	if err := s.repo.UpsertDevice(device); err != nil {
-		fmt.Printf("warning: failed to upsert device: %v\n", err)
+		return nil, response.GeneralError(err)
+	}
+
+	// Session activity logging and limit enforcement
+	if err := s.sessionRepo.RevokeOldestSession(user.ID, 5); err != nil {
+		fmt.Printf("warning: failed to revoke oldest session: %v\n", err)
 	}
 
 	accessToken, refreshToken, err := utils.GenerateTokens(user.ID, s.secretKey)
@@ -151,6 +166,40 @@ func (s *authUseCase) VerifyOTP(req domain.VerifyOTPRequest) (*domain.AuthRespon
 		return nil, response.GeneralError(err)
 	}
 
+	// Create Primary Profile if none exists
+	profiles, _ := s.profileRepo.FindByUserID(user.ID)
+	if len(profiles) == 0 {
+		primaryProfile := &domain.Profile{
+			UserID:      user.ID,
+			ProfileName: "Primary",
+			IsPrimary:   true,
+		}
+		prefs := &domain.UserPreference{
+			AutoplayNext:        true,
+			DefaultVideoQuality: "auto",
+			EmailNotifications:  true,
+			PushNotifications:   true,
+		}
+		if err := s.profileRepo.CreateWithPreferences(primaryProfile, prefs); err != nil {
+			fmt.Printf("warning: failed to create primary profile: %v\n", err)
+		}
+	}
+
+	// Log Session Activity
+	_ = s.sessionRepo.LogActivity(&domain.SessionActivity{
+		RefreshTokenID: &rfToken.ID,
+		Action:         "otp_verified",
+		IPAddress:      "0.0.0.0",
+		UserAgent:      req.DeviceName, // Snapshot from req
+	})
+
+	// Create initial OTP bypass for this device (trusted for 30 days)
+	_ = s.sessionRepo.CreateOTPBypass(&domain.OTPBypass{
+		UserID:     user.ID,
+		DeviceID:   device.ID,
+		ValidUntil: time.Now().Add(30 * 24 * time.Hour),
+	})
+
 	emailStr := ""
 	if user.Email != nil {
 		emailStr = *user.Email
@@ -161,9 +210,11 @@ func (s *authUseCase) VerifyOTP(req domain.VerifyOTPRequest) (*domain.AuthRespon
 			ID:    user.ID,
 			Email: emailStr,
 		},
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresIn:    900,
+		Tokens: domain.AuthTokens{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+			ExpiresIn:    900,
+		},
 	}, nil
 
 }
@@ -197,25 +248,73 @@ func (s *authUseCase) RefreshToken(req domain.RefreshTokenRequest) (*domain.Auth
 	}
 
 	if time.Since(rt.LastActivityAt) > idleLimit {
-		if rt.Device == nil || !rt.Device.IsTrusted {
+		// Check for active OTP bypass (trusted device)
+		bypass, err := s.sessionRepo.CheckOTPBypass(rt.UserID, *rt.DeviceID)
+		if err != nil || bypass == nil {
 			return nil, response.Unauthorized("REVERIFICATION_REQUIRED")
 		}
 	}
 
 	_ = s.tokenRepo.UpdateActivity(rt.ID)
 
+	// Log Session Activity
+	_ = s.sessionRepo.LogActivity(&domain.SessionActivity{
+		RefreshTokenID: &rt.ID,
+		Action:         "token_refresh",
+		IPAddress:      rt.IPAddress,
+		UserAgent:      rt.SessionLabel,
+	})
+
 	accessToken, _, err := utils.GenerateTokens(rt.UserID, s.secretKey)
 	if err != nil {
 		return nil, response.GeneralError(err)
 	}
 	return &domain.AuthResponse{
-		AccessToken: accessToken,
-		ExpiresIn:   900,
+		Tokens: domain.AuthTokens{
+			AccessToken: accessToken,
+			ExpiresIn:   900,
+		},
 	}, nil
 }
 
 func (s *authUseCase) Logout(token string) error {
 	tokenHash := utils.HashOTP(token)
+	rt, err := s.tokenRepo.FindByHash(tokenHash)
+	if err == nil {
+		_ = s.sessionRepo.LogActivity(&domain.SessionActivity{
+			RefreshTokenID: &rt.ID,
+			Action:         "logout",
+			IPAddress:      rt.IPAddress,
+			UserAgent:      rt.SessionLabel,
+		})
+	}
+
 	_ = s.redisRepo.DeleteRefreshToken(token)
 	return s.tokenRepo.RevokeByHash(tokenHash)
+}
+
+func (s *authUseCase) GetSessions(userID uuid.UUID) ([]domain.RefreshToken, error) {
+	return s.sessionRepo.GetActiveSessions(userID)
+}
+
+func (s *authUseCase) RevokeSession(userID, sessionID uuid.UUID) error {
+	// 1. Verify session belongs to user
+	sessions, err := s.sessionRepo.GetActiveSessions(userID)
+	if err != nil {
+		return response.GeneralError(err)
+	}
+
+	found := false
+	for _, sess := range sessions {
+		if sess.ID == sessionID {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return response.Unauthorized("SESSION_NOT_FOUND_OR_NOT_YOURS")
+	}
+
+	return s.sessionRepo.RevokeSession(sessionID)
 }

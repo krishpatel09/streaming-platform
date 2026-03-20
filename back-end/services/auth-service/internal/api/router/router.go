@@ -8,7 +8,7 @@ import (
 	"github.com/krishpatel09/streaming-platform/services/auth-service/internal/api/middleware"
 )
 
-func NewRouter(h *handler.AuthHandler, uh *handler.UserHandler) *gin.Engine {
+func NewRouter(h *handler.AuthHandler, uh *handler.UserHandler, ph *handler.ProfileHandler) *gin.Engine {
 	r := gin.Default()
 
 	// CORS Middleware
@@ -30,13 +30,28 @@ func NewRouter(h *handler.AuthHandler, uh *handler.UserHandler) *gin.Engine {
 			auth.POST("/verify-otp", h.VerifyOTP)
 			auth.POST("/refresh", h.RefreshToken)
 			auth.POST("/logout", h.Logout)
+
+			// Session Management (Device Mgmt)
+			auth.GET("/sessions", middleware.AuthMiddleware(), h.GetSessions)
+			auth.DELETE("/sessions/:id", middleware.AuthMiddleware(), h.RevokeSession)
+		}
+
+		// Profile Routes
+		profiles := apiV1.Group("/profiles")
+		profiles.Use(middleware.AuthMiddleware())
+		{
+			profiles.GET("", ph.GetProfiles)
+			profiles.POST("", ph.CreateProfile)
+			profiles.PATCH("/:id", ph.UpdateProfile)
+			profiles.DELETE("/:id", ph.DeleteProfile)
+			profiles.PATCH("/:id/preferences", ph.UpdatePreferences)
 		}
 	}
 
-	user := r.Group("/user")
-	user.Use(middleware.AuthMiddleware())
+	user_group := r.Group("/user")
+	user_group.Use(middleware.AuthMiddleware())
 	{
-		user.GET("/api/profile", uh.GetProfile)
+		user_group.GET("/api/profile", uh.GetProfile)
 	}
 
 	return r
