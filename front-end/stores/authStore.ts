@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, devtools } from "zustand/middleware";
 import type { User, Profile, AuthTokens } from "@/types";
+import { authService } from "@/serivces/auth.service";
 
 interface AuthState {
   user: User | null;
@@ -8,8 +9,8 @@ interface AuthState {
   tokens: AuthTokens | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
-  // UI State
   isOpen: boolean;
   step: "identify" | "verify" | "success";
   identifier: string;
@@ -23,9 +24,9 @@ interface AuthActions {
   setAuth: (user: User, tokens: AuthTokens) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  setInitialized: (initialized: boolean) => void;
   setError: (error: string | null) => void;
   updateUser: (partial: Partial<User>) => void;
-  // UI Actions
   setOpen: (open: boolean) => void;
   setStep: (step: AuthState["step"]) => void;
   setIdentifier: (
@@ -44,6 +45,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         tokens: null,
         isAuthenticated: false,
         isLoading: false,
+        isInitialized: false,
         error: null,
         isOpen: false,
         step: "identify",
@@ -87,7 +89,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           }
         },
 
-        logout: () => {
+        logout: async () => {
+          try {
+            await authService.logout();
+          } catch (error) {
+            console.error("[Store] Logout API failed:", error);
+          }
+
           set({
             user: null,
             activeProfile: null,
@@ -98,8 +106,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             identifier: "",
             identifierType: null,
           });
+
           if (typeof window !== "undefined") {
-            document.cookie = "is-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            document.cookie =
+              "is-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            window.location.href = "/";
           }
         },
 
@@ -107,6 +118,12 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           set((state) => ({
             ...state,
             isLoading: loading,
+          })),
+
+        setInitialized: (initialized) =>
+          set((state) => ({
+            ...state,
+            isInitialized: initialized,
           })),
 
         setError: (error) =>
@@ -155,6 +172,17 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       }),
       {
         name: "auth-storage",
+        onRehydrateStorage: (state) => {
+          console.log("[Store] Hydration starting");
+          return (state, error) => {
+            if (error) {
+              console.error("[Store] Hydration failed:", error);
+            } else {
+              console.log("[Store] Hydration complete");
+              state?.setInitialized(true);
+            }
+          };
+        },
         partialize: (state) => ({
           user: state.user,
           activeProfile: state.activeProfile,
@@ -164,7 +192,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           identifierType: state.identifierType,
         }),
       },
-
     ),
     { name: "AuthStore" },
   ),

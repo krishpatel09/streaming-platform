@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import {
   Search,
   User,
@@ -13,7 +14,6 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/authStore";
 import { useState } from "react";
 
 const NavItem = ({
@@ -48,7 +48,6 @@ const NavItem = ({
 );
 
 const Sidebar = () => {
-  const setOpen = useAuthStore((state) => state.setOpen);
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -74,50 +73,40 @@ const Sidebar = () => {
 
       {/* Primary Navigation */}
       <div className="flex flex-col items-start w-full gap-2 grow">
+        <NavItem href="/" icon={Home} label="Home" isExpanded={isHovered} />
         <NavItem
-          href="/in/home"
-          icon={Home}
-          label="Home"
-          isExpanded={isHovered}
-        />
-        <NavItem
-          href="/in/search"
+          href="/search"
           icon={Search}
           label="Search"
           isExpanded={isHovered}
         />
+        <NavItem href="/tv" icon={Tv} label="TV" isExpanded={isHovered} />
         <NavItem
-          href="/in/tv-shows"
-          icon={Tv}
-          label="TV"
-          isExpanded={isHovered}
-        />
-        <NavItem
-          href="/in/movies"
+          href="/movies"
           icon={Film}
           label="Movies"
           isExpanded={isHovered}
         />
         <NavItem
-          href="/in/sports"
+          href="/sports"
           icon={Trophy}
           label="Sports"
           isExpanded={isHovered}
         />
         <NavItem
-          href="/in/sparks"
+          href="/sparks"
           icon={Zap}
           label="Sparks"
           isExpanded={isHovered}
         />
         <NavItem
-          href="/in/categories"
+          href="/categories"
           icon={LayoutGrid}
           label="Categories"
           isExpanded={isHovered}
         />
         <NavItem
-          href="/in/mypage"
+          href="/myspace"
           icon={User}
           label="My Space"
           isExpanded={isHovered}

@@ -31,7 +31,7 @@ export function ProfileSelection() {
 
   const handleProfileSelect = (profile: Profile) => {
     setCurrentProfile(profile);
-    router.push(`/mypage`);
+    router.push("/"); // Changed redirect from /home to /
   };
 
   if (isLoading) {

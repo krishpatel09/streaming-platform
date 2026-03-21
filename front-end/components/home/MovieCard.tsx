@@ -17,6 +17,8 @@ interface MovieCardProps {
   genres?: string[];
   number?: number;
   showNumber?: boolean;
+  progress?: number; // 0 to 100
+  subtitle?: string;
 }
 
 export function MovieCard({
@@ -31,6 +33,8 @@ export function MovieCard({
   genres = ["Action", "Drama"],
   number,
   showNumber = false,
+  progress,
+  subtitle,
 }: MovieCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imgSrc, setImgSrc] = useState(
@@ -55,6 +59,15 @@ export function MovieCard({
           isHorizontal ? "aspect-video" : "aspect-2/3",
         )}
       />
+
+      {/* Static Info (Visible when not hovered, specifically for MySpace) */}
+      {!isHovered && subtitle && (
+        <div className="mt-2 px-1">
+          <p className="text-zinc-100 text-[13px] font-bold truncate">{title}</p>
+          <p className="text-zinc-400 text-[12px] font-medium truncate">{subtitle}</p>
+          {duration && <p className="text-zinc-500 text-[11px] font-medium">{duration}</p>}
+        </div>
+      )}
 
       {/* ─── Expandable Container ─── */}
       <div
@@ -97,6 +110,16 @@ export function MovieCard({
             style={{ transition: "none" }}
             unoptimized={imgSrc.startsWith("http")}
           />
+
+          {/* Progress Bar (Continue Watching) */}
+          {progress !== undefined && (
+             <div className="absolute bottom-0 left-0 w-full h-[3px] bg-white/20 z-30">
+                <div 
+                  className="h-full bg-blue-500 transition-all duration-500" 
+                  style={{ width: `${progress}%` }} 
+                />
+             </div>
+          )}
 
           {/* Bottom Fade Gradient (Static View) */}
           {!isHovered && (
@@ -153,6 +176,12 @@ export function MovieCard({
               <span className="text-zinc-600"> • </span>
               <span className="text-zinc-400">4 Languages</span>
             </div>
+
+            {subtitle && (
+              <p className="text-blue-500 text-[11px] font-black uppercase tracking-wider">
+                {isNewEpisode ? "New Episode" : "Continue Watching"}
+              </p>
+            )}
 
             {/* Movie Description */}
             <p className="text-zinc-400 text-[11px] leading-relaxed line-clamp-4 font-medium opacity-90">

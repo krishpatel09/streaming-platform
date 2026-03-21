@@ -4,17 +4,16 @@ import { useAuthStore } from "@/stores/authStore";
 import { IdentifyStep } from "@/components/auth/IdentifyStep";
 import { VerifyStep } from "@/components/auth/VerifyStep";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 
 export default function LoginPage() {
   const { step, isAuthenticated } = useAuthStore();
   const router = useRouter();
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/profile-selecter");
+      router.push(`/profile-selecter`);
     }
   }, [isAuthenticated, router]);
 

@@ -12,6 +12,7 @@ export const ROUTES = {
   SETTINGS: "/settings",
   HELP: "/help",
   ABOUT: "/about",
+  SUBSCRIBE: "/subscribe",
 };
 
 export const AUTH_ROUTES = [ROUTES.LOGIN];

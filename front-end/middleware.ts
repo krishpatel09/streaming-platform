@@ -20,9 +20,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (isAuthRoute && isAuth) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+  // Removed /login redirect when isAuth is true to prevent loop
+  // Client-side LoginPage will handle redirect if actually authenticated
 
   return NextResponse.next();
 }
