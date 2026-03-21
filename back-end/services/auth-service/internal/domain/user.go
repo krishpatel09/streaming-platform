@@ -8,7 +8,6 @@ import (
 
 type User struct {
 	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Username      string    `gorm:"type:varchar(255);uniqueIndex;not null"`
 	Email         *string   `gorm:"type:varchar(255);uniqueIndex;where:email IS NOT NULL"`
 	PhoneNumber   *string   `gorm:"type:varchar(20);uniqueIndex;where:phone_number IS NOT NULL"`
 	PhoneVerified bool      `gorm:"not null;default:false"`

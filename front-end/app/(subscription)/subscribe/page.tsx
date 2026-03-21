@@ -93,7 +93,7 @@ export default function SubscribePage() {
 
         {/* HERO HEADER */}
         <div className="text-center mb-24">
-          <h1 className="text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tighter mb-6 bg-linear-to-b from-white to-white/40 bg-clip-text text-transparent">
+          <h1 className="text-6xl lg:text-7xl font-black leading-[1.05] tracking-tighter mb-6 bg-linear-to-b from-white to-white/40 bg-clip-text text-transparent">
             Elevate Your <br /> Reality
           </h1>
           <p className="text-xl text-zinc-400 font-medium max-w-2xl mx-auto tracking-tight leading-relaxed">
@@ -134,16 +134,16 @@ export default function SubscribePage() {
               key={plan.id}
               onClick={() => setSelectedPlan(plan.id)}
               className={cn(
-                "relative p-12 rounded-[3rem] border-2 transition-all cursor-pointer group flex flex-col gap-10 backdrop-blur-[40px] hover:translate-y-[-8px]",
+                "relative p-12 rounded-[3rem] border-2 transition-all cursor-pointer group flex flex-col gap-10 backdrop-blur-2xl hover:translate-y-[-8px]",
                 selectedPlan === plan.id
                   ? "border-indigo-500 bg-indigo-500/10 shadow-[0_20px_60px_-15px_rgba(79,70,229,0.3)] ring-1 ring-white/20"
-                  : "border-white/10 bg-white/[0.03] hover:border-white/20",
+                  : "border-white/10 bg-white/3 hover:border-white/20",
               )}
             >
               {/* Selected Indicator */}
               {selectedPlan === plan.id && (
                 <div className="absolute top-8 right-8 w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center shadow-lg animate-in zoom-in-0 duration-300">
-                  <Check className="w-5 h-5 text-white stroke-[4]" />
+                  <Check className="w-5 h-5 text-white stroke-4" />
                 </div>
               )}
 

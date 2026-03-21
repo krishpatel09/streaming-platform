@@ -151,14 +151,16 @@ export default function MySpacePage() {
             </div>
 
             {/* Add Profile */}
-            <div className="flex flex-col items-center gap-3 opacity-60 hover:opacity-100 transition-opacity">
-              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-white/5 border-4 border-white/5 hover:border-white/20 flex items-center justify-center transition-all cursor-pointer group">
-                <Plus className="w-10 h-10 text-zinc-400 group-hover:text-white transition-colors" />
+            <Link href="/myspace/create-profile">
+              <div className="flex flex-col items-center gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-pointer group">
+                <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-white/5 border-4 border-white/5 hover:border-white/20 flex items-center justify-center transition-all">
+                  <Plus className="w-10 h-10 text-zinc-400 group-hover:text-white transition-colors" />
+                </div>
+                <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest">
+                  Add
+                </span>
               </div>
-              <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest">
-                Add
-              </span>
-            </div>
+            </Link>
           </div>
         </div>
       </div>
