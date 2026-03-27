@@ -1,14 +1,21 @@
 export const API_ENDPOINTS = {
   AUTH: {
-    SEND_OTP: "/api/v1/auth/send-otp",
-    VERIFY_OTP: "/api/v1/auth/verify-otp",
-    REFRESH_TOKEN: "/api/v1/auth/refresh",
-    LOGOUT: "/api/v1/auth/logout",
-    GET_SESSIONS: "/api/v1/auth/sessions",
-    REVOKE_SESSION: "/api/v1/auth/sessions/:id",
+    SEND_OTP: "/api/auth/send-otp",
+    VERIFY_OTP: "/api/auth/verify-otp",
+    REFRESH_TOKEN: "/api/auth/refresh",
+    LOGOUT: "/api/auth/logout",
+    GET_SESSIONS: "/api/auth/sessions",
+    REVOKE_SESSION: "/api/auth/sessions/:id",
   },
   USER: {
-    PROFILES: "/api/v1/profiles",
-    UPDATE_USER: "/api/v1/user/update",
+    PROFILES: "/api/profiles",
+    UPDATE_USER: "/api/user/update",
+  },
+  ADMIN: {
+    ADD_CONTENT: "/api/admin/content",
+    NOTIFY_UPLOAD: "/api/admin/upload",
+  },
+  STREAMING: {
+    GET_UPLOAD_URL: "/api/streaming/upload-url",
   },
 };

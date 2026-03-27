@@ -11,7 +11,7 @@ import (
 )
 
 func ConnectPostgres(cfg config.PostgresConfig) (*gorm.DB, error) {
-	psqlInfo := fmt.Sprintf("host=%s user=%s dbname=%s port=%s password=%s", cfg.DBHost, cfg.DBUser, cfg.DBName, cfg.DBPort, cfg.DBPassword)
+	psqlInfo := fmt.Sprintf("host=%s user=%s dbname=%s port=%s password=%s", cfg.DB_Host, cfg.DB_User, cfg.DB_Name, cfg.DB_Port, cfg.DB_Password)
 	DB, dbErr := gorm.Open(postgres.Open(psqlInfo), &gorm.Config{
 		SkipDefaultTransaction: true,
 		Logger:                 logger.Default.LogMode(logger.Silent),

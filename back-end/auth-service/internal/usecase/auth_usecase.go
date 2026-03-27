@@ -270,6 +270,7 @@ func (s *authUseCase) RefreshToken(req domain.RefreshTokenRequest) (*domain.Auth
 	if err != nil {
 		return nil, response.GeneralError(err)
 	}
+	fmt.Println("token: ", accessToken)
 	return &domain.AuthResponse{
 		Tokens: domain.AuthTokens{
 			AccessToken: accessToken,

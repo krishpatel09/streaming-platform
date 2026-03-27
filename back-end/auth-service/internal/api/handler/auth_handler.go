@@ -59,16 +59,13 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 }
 
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" || len(authHeader) < 8 || authHeader[:7] != "Bearer " {
-		c.JSON(http.StatusUnauthorized, response.Unauthorized("missing or invalid authorization header"))
+	var req domain.RefreshTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.BadRequest("missing or invalid refresh token in body"))
 		return
 	}
-	refreshToken := authHeader[7:]
 
-	res, err := h.svc.RefreshToken(domain.RefreshTokenRequest{
-		RefreshToken: refreshToken,
-	})
+	res, err := h.svc.RefreshToken(req)
 	if err != nil {
 		if r, ok := err.(response.Response); ok {
 			c.JSON(r.StatusCode, r)
@@ -82,17 +79,15 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" || len(authHeader) < 8 || authHeader[:7] != "Bearer " {
-		c.JSON(http.StatusUnauthorized, response.Unauthorized("missing or invalid authorization header"))
+	var req struct {
+		RefreshToken string `json:"refreshToken" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.BadRequest("missing or invalid refresh token in body"))
 		return
 	}
-	token := authHeader[7:]
 
-	// Note: In a real app, if this is an access token,
-	// we'd parse it to get the session_id/refresh_token_id.
-	// For now, assuming the client sends the refresh token to logout or we handle it via claims.
-	if err := h.svc.Logout(token); err != nil {
+	if err := h.svc.Logout(req.RefreshToken); err != nil {
 		c.JSON(http.StatusInternalServerError, response.GeneralError(err))
 		return
 	}

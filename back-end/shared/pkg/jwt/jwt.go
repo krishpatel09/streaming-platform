@@ -10,7 +10,7 @@ import (
 func GenerateTokens(userID uuid.UUID, secretKey string) (string, string, error) {
 	accessClaims := jwt.MapClaims{
 		"user_id": userID.String(),
-		"exp":     time.Now().Add(10 * time.Minute).Unix(),
+		"exp":     time.Now().Add(30 * time.Minute).Unix(),
 		"iat":     time.Now().Unix(),
 		"type":    "access",
 	}

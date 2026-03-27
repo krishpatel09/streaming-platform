@@ -22,7 +22,7 @@ func NewRouter(h *handler.AuthHandler, uh *handler.UserHandler, ph *handler.Prof
 		})
 	})
 
-	apiV1 := r.Group("/api/v1")
+	apiV1 := r.Group("/api")
 	{
 		auth := apiV1.Group("/auth")
 		{
@@ -46,12 +46,12 @@ func NewRouter(h *handler.AuthHandler, uh *handler.UserHandler, ph *handler.Prof
 			profiles.DELETE("/:id", ph.DeleteProfile)
 			profiles.PATCH("/:id/preferences", ph.UpdatePreferences)
 		}
-	}
-
-	user_group := r.Group("/user")
-	user_group.Use(middleware.AuthMiddleware())
-	{
-		user_group.GET("/api/profile", uh.GetProfile)
+		// User Profile Routes
+		user_group := apiV1.Group("/user")
+		user_group.Use(middleware.AuthMiddleware())
+		{
+			user_group.GET("/profile", uh.GetProfile)
+		}
 	}
 
 	return r

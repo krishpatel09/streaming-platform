@@ -9,7 +9,7 @@ export default function ProfileSelecterPage() {
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-500/5 rounded-full blur-[180px] -mr-96 -mt-96" />
       </div>
-      
+
       <ProfileSelection />
     </div>
   );

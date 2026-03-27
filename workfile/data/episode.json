@@ -1,0 +1,36 @@
+[
+  {
+    "id": "642d1f4e1f4e1f4e1f4e1f51",
+    "show_id": "642d1f4e1f4e1f4e1f4e1f4f",
+    "season_number": 1,
+    "episode_number": 1,
+    "title": "The Name of the Game",
+    "description": "When a Supe kills the love of his life, Hughie Campbell joins force with Billy Butcher to expose the truth about The Seven.",
+    "duration_minutes": 60,
+    "thumbnail_url": "https://example.com/thumbs/the-boys-s1e1.jpg",
+    "streaming": {
+      "hls_master_url": "http://localhost:9000/hls/s1e1/master.m3u8",
+      "available_qualities": ["720p", "1080p"]
+    },
+    "air_date": "2019-07-26T00:00:00Z",
+    "is_published": true,
+    "created_at": "2024-03-25T12:00:00Z"
+  },
+  {
+    "id": "642d1f4e1f4e1f4e1f4e1f52",
+    "show_id": "642d1f4e1f4e1f4e1f4e1f4f",
+    "season_number": 1,
+    "episode_number": 2,
+    "title": "Cherry",
+    "description": "The Boys have a Supe in their custody. Vought's Madelyn Stillwell offers a deal.",
+    "duration_minutes": 58,
+    "thumbnail_url": "https://example.com/thumbs/the-boys-s1e2.jpg",
+    "streaming": {
+      "hls_master_url": "http://localhost:9000/hls/s1e2/master.m3u8",
+      "available_qualities": ["720p", "1080p"]
+    },
+    "air_date": "2019-07-26T00:00:00Z",
+    "is_published": true,
+    "created_at": "2024-03-25T12:10:00Z"
+  }
+]

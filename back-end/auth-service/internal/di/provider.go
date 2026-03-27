@@ -33,5 +33,5 @@ func ProvideSMSSender() *sms.SMSSender {
 }
 
 func ProvideSecretKey() string {
-	return os.Getenv("SECRET_KEY")
+	return os.Getenv("JWT_SECRET_KEY")
 }

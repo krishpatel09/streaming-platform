@@ -142,3 +142,16 @@ Phase 2 = Upload
 Phase 3 = Processing
 Phase 4 = Watching
 Phase 5 = Scaling
+
+flow
+
+1. Admin Panel → Upload Video
+2. Admin Service → Generate Presigned URL
+3. Frontend → Upload to MinIO
+4. Admin Service → Save Metadata → Catalog Service
+5. Catalog Service → Mark as "Processing"
+6. Kafka → "Video Uploaded" Event
+7. Transcoding Service → Convert to HLS
+8. Transcoding Service → Upload HLS → MinIO
+9. Transcoding Service → Update Catalog Service
+10. Catalog Service → Mark as "Published"

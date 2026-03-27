@@ -7,11 +7,11 @@ import (
 )
 
 type PostgresConfig struct {
-	DBHost     string `mapstructure:"DB_HOST"`
-	DBName     string `mapstructure:"DB_NAME"`
-	DBUser     string `mapstructure:"DB_USER"`
-	DBPort     string `mapstructure:"DB_PORT"`
-	DBPassword string `mapstructure:"DB_PASSWORD"`
+	DB_Host     string `mapstructure:"DB_HOST"`
+	DB_Name     string `mapstructure:"DB_NAME"`
+	DB_User     string `mapstructure:"DB_USER"`
+	DB_Port     string `mapstructure:"DB_PORT"`
+	DB_Password string `mapstructure:"DB_PASSWORD"`
 }
 
 var envs = []string{
@@ -20,9 +20,12 @@ var envs = []string{
 
 func LoadPostgresConfig() (PostgresConfig, error) {
 	var cfg PostgresConfig
-	viper.AddConfigPath("../../")
-	viper.SetConfigFile("../../.env")
-	viper.ReadInConfig()
+	viper.SetConfigFile(".env")
+	if err := viper.ReadInConfig(); err != nil {
+		viper.SetConfigFile("../.env")
+		viper.ReadInConfig()
+	}
+
 	for _, env := range envs {
 		if err := viper.BindEnv(env); err != nil {
 			return cfg, err
@@ -43,9 +46,13 @@ func LoadPostgresConfig() (PostgresConfig, error) {
 }
 
 func LoadEnv() error {
-	err := godotenv.Load("../../.env")
+	err := godotenv.Load(".env")
 	if err != nil {
-		return err
+		err = godotenv.Load("../.env")
+		if err != nil {
+			return nil
+		}
 	}
+
 	return nil
 }

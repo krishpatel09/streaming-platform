@@ -1,70 +1,54 @@
 package response
 
 import (
-	"encoding/json"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Response struct {
-	StatusCode int    `json:"-"`
-	Success    bool   `json:"success"`
-	Message    string `json:"message"`
-	Data       any    `json:"data,omitempty"`
+	Success bool        `json:"success"`
+	Message string      `json:"message,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
 }
 
-func (r Response) Error() string {
-	return r.Message
+func OK(c *gin.Context, data interface{}) {
+	c.JSON(http.StatusOK, Response{Success: true, Data: data})
 }
 
-func WriteJson(w http.ResponseWriter, status int, message string, data any) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-
-	return json.NewEncoder(w).Encode(Response{
-		StatusCode: status,
-		Success:    status >= 200 && status < 300,
-		Message:    message,
-		Data:       data,
-	})
+func OKMessage(c *gin.Context, message string, data interface{}) {
+	c.JSON(http.StatusOK, Response{Success: true, Message: message, Data: data})
 }
 
-func NewResponse(statusCode int, message string, data any) Response {
-	return Response{
-		StatusCode: statusCode,
-		Success:    statusCode >= 200 && statusCode < 300,
-		Message:    message,
-		Data:       data,
-	}
+func Created(c *gin.Context, data interface{}) {
+	c.JSON(http.StatusCreated, Response{Success: true, Data: data})
 }
 
-func GeneralError(err error) Response {
-	return Response{
-		StatusCode: http.StatusInternalServerError,
-		Success:    false,
-		Message:    err.Error(),
-	}
+func NoContent(c *gin.Context) {
+	c.Status(http.StatusNoContent)
 }
 
-func EmailAlreadyExists() Response {
-	return Response{
-		StatusCode: http.StatusConflict,
-		Success:    false,
-		Message:    "email already exists",
-	}
+func BadRequest(c *gin.Context, err string) {
+	c.JSON(http.StatusBadRequest, Response{Success: false, Error: err})
 }
 
-func Unauthorized(message string) Response {
-	return Response{
-		StatusCode: http.StatusUnauthorized,
-		Success:    false,
-		Message:    message,
-	}
+func Unauthorized(c *gin.Context) {
+	c.JSON(http.StatusUnauthorized, Response{Success: false, Error: "unauthorized"})
 }
 
-func BadRequest(message string) Response {
-	return Response{
-		StatusCode: http.StatusBadRequest,
-		Success:    false,
-		Message:    message,
-	}
+func Forbidden(c *gin.Context) {
+	c.JSON(http.StatusForbidden, Response{Success: false, Error: "forbidden"})
+}
+
+func NotFound(c *gin.Context, resource string) {
+	c.JSON(http.StatusNotFound, Response{Success: false, Error: resource + " not found"})
+}
+
+func Conflict(c *gin.Context, err string) {
+	c.JSON(http.StatusConflict, Response{Success: false, Error: err})
+}
+
+func InternalError(c *gin.Context) {
+	c.JSON(http.StatusInternalServerError, Response{Success: false, Error: "internal server error"})
 }

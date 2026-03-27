@@ -6,22 +6,23 @@ import (
 )
 
 type RedisConfig struct {
-	RedisHost     string `mapstructure:"REDIS_HOST"`
-	RedisPort     string `mapstructure:"REDIS_PORT"`
+	RedisHost     string `mapstructure:"AUTH_REDIS_HOST"`
+	RedisPort     string `mapstructure:"AUTH_REDIS_PORT"`
 	RedisPassword string `mapstructure:"REDIS_PASSWORD"`
 	RedisDB       int    `mapstructure:"AUTH_REDIS_DB"`
 }
 
 var redisEnvs = []string{
-	"REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD", "AUTH_REDIS_DB",
+	"AUTH_REDIS_HOST", "AUTH_REDIS_PORT", "REDIS_PASSWORD", "AUTH_REDIS_DB",
 }
 
 func LoadRedisConfig() (RedisConfig, error) {
 	var cfg RedisConfig
-	viper.AddConfigPath("../../")
-	viper.SetConfigFile("../../.env")
-	viper.AutomaticEnv()
-	viper.ReadInConfig()
+	viper.SetConfigFile(".env")
+	if err := viper.ReadInConfig(); err != nil {
+		viper.SetConfigFile("../.env")
+		viper.ReadInConfig()
+	}
 	for _, env := range redisEnvs {
 		if err := viper.BindEnv(env); err != nil {
 			return cfg, err
