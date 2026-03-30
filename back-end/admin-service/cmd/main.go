@@ -20,11 +20,17 @@ func main() {
 	// 2. Initialize Shared MongoDB
 	sharedConfig.ConnectMongo(cfg.DatabaseURL, cfg.DatabaseName)
 
-	// 3. Initialize Kafka Producer
+	// 3. Initialize Kafka Infrastructure (Self-Provisioning)
+	log.Println("⚡ Initializing Kafka Topics (Self-Provisioning Phase)...")
+	if err := kafka.EnsureTopics(cfg.KafkaBrokers, kafka.AllTopics); err != nil {
+		log.Fatalf("❌ Critical Failure: Failed to provision Kafka topics: %v", err)
+	}
+
+	// 4. Initialize Producer (Resilient Mode)
 	producer := kafka.NewProducer(cfg.KafkaBrokers)
 	defer producer.Close()
 
-	// 4. Initialize Clean Architecture Layers
+	// 5. Initialize Clean Architecture Layers
 	repo := repository.NewVideoRepository()
 	uc := usecase.NewVideoUseCase(repo, producer)
 	h := handler.NewVideoHandler(uc, nil, producer) // Storage as mock

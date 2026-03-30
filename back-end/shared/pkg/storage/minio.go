@@ -77,14 +77,24 @@ func (s *minioStorage) GetPresignedURL(ctx context.Context, bucketName, objectNa
 }
 
 func (s *minioStorage) CreateBucket(ctx context.Context, bucketName string) error {
-	exists, err := s.client.BucketExists(ctx, bucketName)
-	if err != nil {
-		return err
+	var err error
+	for i := 0; i < 5; i++ {
+		exists, err := s.client.BucketExists(ctx, bucketName)
+		if err == nil {
+			if exists {
+				return nil
+			}
+			err = s.client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+			if err == nil {
+				fmt.Printf("✅ Created bucket: %s\n", bucketName)
+				return nil
+			}
+		}
+
+		fmt.Printf("⏳ Waiting for MinIO... attempt %d/5 (%v)\n", i+1, err)
+		time.Sleep(2 * time.Second)
 	}
-	if exists {
-		return nil
-	}
-	return s.client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+	return fmt.Errorf("failed to create bucket %s after 5 attempts: %w", bucketName, err)
 }
 
 func (s *minioStorage) UploadFile(ctx context.Context, bucketName, objectName string, filePath string, contentType string) error {

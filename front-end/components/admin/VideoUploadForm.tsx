@@ -100,14 +100,17 @@ export default function VideoUploadForm({
       end_time: "",
     },
     videoFile: null as File | null,
+    trailerFile: null as File | null,
+    posterFile: null as File | null,
+    bannerFile: null as File | null,
   });
 
   const [newGenre, setNewGenre] = useState("");
   const [newTag, setNewTag] = useState("");
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: "videoFile" | "trailerFile" | "posterFile" | "bannerFile" = "videoFile") => {
     if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, videoFile: e.target.files[0] });
+      setFormData({ ...formData, [field]: e.target.files[0] });
     }
   };
 
@@ -165,9 +168,9 @@ export default function VideoUploadForm({
   };
 
   const handleSubmit = () => {
-    if (!formData.videoFile || !formData.title.default) {
+    if (!formData.videoFile || !formData.title.default || !formData.posterFile || !formData.bannerFile) {
       setError(
-        "Please provide at least a default title and select a video file.",
+        "Please provide a title, poster, banner, and select a video file.",
       );
       return;
     }
@@ -459,44 +462,167 @@ export default function VideoUploadForm({
           className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
         >
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-                Poster URL
-              </Label>
-              <Input
-                placeholder="https://example.com/poster.jpg"
-                value={formData.poster_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, poster_url: e.target.value })
-                }
-                className="bg-zinc-50 border-zinc-200 text-zinc-900 font-medium h-12 rounded-xl"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                  <Layout className="h-3 w-3" /> Poster Image
+                </Label>
+                <div
+                  className={cn(
+                    "border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center transition-all cursor-pointer h-48",
+                    formData.posterFile
+                      ? "border-indigo-500 bg-indigo-50/20"
+                      : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-zinc-100/50",
+                  )}
+                  onClick={() => document.getElementById("poster-upload")?.click()}
+                >
+                  <input
+                    type="file"
+                    id="poster-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, "posterFile")}
+                  />
+                  {formData.posterFile ? (
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <div className="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg">
+                        <CheckCircle2 className="h-6 w-6 text-white" />
+                      </div>
+                      <p className="text-xs font-bold text-zinc-900 truncate max-w-[150px]">
+                        {formData.posterFile.name}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[10px] text-zinc-400 hover:text-red-500 font-bold"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormData({ ...formData, posterFile: null });
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <Upload className="h-6 w-6 text-zinc-400 mb-2" />
+                      <p className="text-xs font-bold text-zinc-900">Upload Poster</p>
+                      <p className="text-[10px] text-zinc-400">Portrait (2:3)</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                  <Layout className="h-3 w-3" /> Banner Image
+                </Label>
+                <div
+                  className={cn(
+                    "border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center transition-all cursor-pointer h-48",
+                    formData.bannerFile
+                      ? "border-indigo-500 bg-indigo-50/20"
+                      : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-zinc-100/50",
+                  )}
+                  onClick={() => document.getElementById("banner-upload")?.click()}
+                >
+                  <input
+                    type="file"
+                    id="banner-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, "bannerFile")}
+                  />
+                  {formData.bannerFile ? (
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <div className="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg">
+                        <CheckCircle2 className="h-6 w-6 text-white" />
+                      </div>
+                      <p className="text-xs font-bold text-zinc-900 truncate max-w-[150px]">
+                        {formData.bannerFile.name}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[10px] text-zinc-400 hover:text-red-500 font-bold"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormData({ ...formData, bannerFile: null });
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <Upload className="h-6 w-6 text-zinc-400 mb-2" />
+                      <p className="text-xs font-bold text-zinc-900">Upload Banner</p>
+                      <p className="text-[10px] text-zinc-400">Landscape (16:9)</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-                Banner URL
+
+            <div className="space-y-4 pt-4 border-t border-zinc-100">
+              <Label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                <Play className="h-4 w-4 text-indigo-600" /> Trailer Video (Preview)
               </Label>
-              <Input
-                placeholder="https://example.com/banner.jpg"
-                value={formData.banner_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, banner_url: e.target.value })
-                }
-                className="bg-zinc-50 border-zinc-200 text-zinc-900 font-medium h-12 rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-                Trailer URL (Preview)
-              </Label>
-              <Input
-                placeholder="https://example.com/trailer.mp4"
-                value={formData.trailer_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, trailer_url: e.target.value })
-                }
-                className="bg-zinc-50 border-zinc-200 text-zinc-900 font-medium h-12 rounded-xl"
-              />
+              <div
+                className={cn(
+                  "border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center transition-all cursor-pointer",
+                  formData.trailerFile
+                    ? "border-indigo-500 bg-indigo-50/20"
+                    : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-zinc-100/50",
+                )}
+                onClick={() => document.getElementById("trailer-upload")?.click()}
+              >
+                <input
+                  type="file"
+                  id="trailer-upload"
+                  className="hidden"
+                  accept="video/*"
+                  onChange={(e) => handleFileChange(e, "trailerFile")}
+                />
+                {formData.trailerFile ? (
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-100">
+                      <CheckCircle2 className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-bold text-zinc-900">
+                        {formData.trailerFile.name}
+                      </p>
+                      <p className="text-[10px] text-zinc-500">
+                        {(formData.trailerFile.size / (1024 * 1024)).toFixed(1)} MB
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[10px] text-zinc-400 hover:text-red-500 ml-4 font-bold"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormData({ ...formData, trailerFile: null });
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center mb-2">
+                      <Upload className="h-5 w-5 text-zinc-400" />
+                    </div>
+                    <p className="text-xs font-bold text-zinc-900">
+                      Upload trailer clip
+                    </p>
+                    <p className="text-[10px] text-zinc-400 mt-0.5">
+                      Short preview video (Max 500MB)
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

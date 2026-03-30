@@ -27,9 +27,12 @@ func main() {
 		log.Fatalf("failed to connect to minio: %v", err)
 	}
 
-	// Ensure bucket exists
-	if err := s.CreateBucket(context.Background(), "videos"); err != nil {
-		log.Printf("Warning: failed to ensure bucket 'videos' exists: %v", err)
+	// Ensure required buckets exist
+	buckets := []string{"videos", "hls"}
+	for _, bucket := range buckets {
+		if err := s.CreateBucket(context.Background(), bucket); err != nil {
+			log.Fatalf("failed to initialize bucket '%s': %v", bucket, err)
+		}
 	}
 
 	h := handler.NewStreamingHandler(s)

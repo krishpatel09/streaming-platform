@@ -19,6 +19,7 @@ func NewStreamingHandler(s storage.Storage) *StreamingHandler {
 
 type UploadURLRequest struct {
 	VideoID string `json:"video_id" binding:"required"`
+	Type    string `json:"type"` // e.g., "trailer" or "source"
 }
 
 func (h *StreamingHandler) GetUploadURL(c *gin.Context) {
@@ -28,7 +29,21 @@ func (h *StreamingHandler) GetUploadURL(c *gin.Context) {
 		return
 	}
 
-	objectName := "raw/" + req.VideoID + ".mp4"
+	suffix := ""
+	ext := ".mp4"
+
+	switch req.Type {
+	case "trailer":
+		suffix = "_trailer"
+	case "poster":
+		suffix = "_poster"
+		ext = ".jpg"
+	case "banner":
+		suffix = "_banner"
+		ext = ".jpg"
+	}
+
+	objectName := "raw/" + req.VideoID + suffix + ext
 	url, err := h.storage.GetPresignedURL(c.Request.Context(), "videos", objectName, 15*time.Minute)
 	if err != nil {
 		log.Printf("Error generating presigned URL: %v", err)

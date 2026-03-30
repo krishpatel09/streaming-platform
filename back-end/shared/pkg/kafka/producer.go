@@ -20,11 +20,16 @@ type kafkaProducer struct {
 func NewProducer(brokers []string) Producer {
 	return &kafkaProducer{
 		writer: &kafka.Writer{
-			Addr:         kafka.TCP(brokers...),
-			Balancer:     &kafka.LeastBytes{},
-			MaxAttempts:  5,
-			BatchSize:    100,
-			BatchTimeout: 10 * time.Millisecond,
+			Addr:                   kafka.TCP(brokers...),
+			Balancer:               &kafka.LeastBytes{},
+			AllowAutoTopicCreation: true,
+			MaxAttempts:            10, // Higher retry count for metadata refresh
+			BatchSize:              100,
+			BatchTimeout:           10 * time.Millisecond,
+			ReadTimeout:            10 * time.Second,
+			WriteTimeout:           10 * time.Second,
+			RequiredAcks:           kafka.RequiredAcks(-1), // Wait for all in-sync replicas (robust)
+			Async:                  false,                  // Sync for better leadership awareness during retries
 		},
 	}
 }

@@ -2,11 +2,12 @@ import { API_ENDPOINTS } from "@/config/api";
 import apiClient from "./apiClient";
 
 export const adminService = {
-  getUploadUrl: async (videoID: string) => {
+  getUploadUrl: async (videoID: string, type: string = "source") => {
     const response = await apiClient.post(
       API_ENDPOINTS.STREAMING.GET_UPLOAD_URL,
       {
         video_id: videoID,
+        type: type,
       },
     );
     return response.data;
@@ -15,6 +16,14 @@ export const adminService = {
   addContent: async (content: any) => {
     const response = await apiClient.post(
       API_ENDPOINTS.ADMIN.ADD_CONTENT,
+      content,
+    );
+    return response.data;
+  },
+
+  updateContent: async (id: string, content: any) => {
+    const response = await apiClient.put(
+      `${API_ENDPOINTS.ADMIN.ADD_CONTENT}/${id}`,
       content,
     );
     return response.data;

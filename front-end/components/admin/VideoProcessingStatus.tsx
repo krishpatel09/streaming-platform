@@ -41,14 +41,17 @@ interface VideoProcessingStatusProps {
   seasons?: any[];
   live?: any;
   videoFile: File;
+  trailerFile?: File | null;
+  posterFile?: File | null;
+  bannerFile?: File | null;
   onClose: () => void;
 }
 
 export default function VideoProcessingStatus(
   props: VideoProcessingStatusProps,
 ) {
-  const { title, videoFile, onClose } = props;
-  const [step, setStep] = useState(0); // 1: Metadata, 2: Upload URL, 3: Uploading, 4: Notifying, 5: Success
+  const { title, videoFile, trailerFile, posterFile, bannerFile, onClose } = props;
+  const [step, setStep] = useState(0); // 1: Metadata, 2: Assets, 3: Binary, 4: Notifying, 5: Success
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -71,19 +74,51 @@ export default function VideoProcessingStatus(
         if (!videoID)
           throw new Error("Backend did not return a valid content ID");
 
-        // Step 2: Get Presigned URL (Streaming Service)
+        // Step 2: Upload Assets (Poster, Banner, Trailer)
         setStep(2);
-        const { upload_url, storage_path } =
-          await adminService.getUploadUrl(videoID);
+        let finalPosterPath = "";
+        let finalBannerPath = "";
 
-        // Step 3: Direct binary upload to S3/MinIO
+        if (posterFile) {
+          console.log("🖼️ Uploading Poster...");
+          const posterUrlData = await adminService.getUploadUrl(videoID, "poster");
+          await adminService.uploadToMinio(posterUrlData.upload_url, posterFile, (p) => setUploadProgress(p));
+          finalPosterPath = posterUrlData.storage_path;
+          setUploadProgress(0);
+        }
+
+        if (bannerFile) {
+          console.log("🖼️ Uploading Banner...");
+          const bannerUrlData = await adminService.getUploadUrl(videoID, "banner");
+          await adminService.uploadToMinio(bannerUrlData.upload_url, bannerFile, (p) => setUploadProgress(p));
+          finalBannerPath = bannerUrlData.storage_path;
+          setUploadProgress(0);
+        }
+
+        if (trailerFile) {
+          console.log("🎬 Uploading Trailer...");
+          const trailerUrlData = await adminService.getUploadUrl(videoID, "trailer");
+          await adminService.uploadToMinio(trailerUrlData.upload_url, trailerFile, (p) => setUploadProgress(p));
+          setUploadProgress(0);
+        }
+
+        // Step 3: Direct binary upload for Main Video
         setStep(3);
+        const { upload_url, storage_path } = await adminService.getUploadUrl(videoID, "source");
         await adminService.uploadToMinio(upload_url, videoFile, (percent) => {
           setUploadProgress(percent);
         });
 
-        // Step 4: Notify Admin Service to start transcoding
+        // Step 4: Finalize Metadata & Trigger Processing
         setStep(4);
+        // Save poster/banner URLs to catalog record
+        if (finalPosterPath || finalBannerPath) {
+          await adminService.updateContent(videoID, {
+            poster_url: finalPosterPath,
+            banner_url: finalBannerPath,
+          });
+        }
+
         await adminService.notifyUploadComplete({
           video_id: videoID,
           title: title.default,
@@ -191,9 +226,9 @@ export default function VideoProcessingStatus(
               </div>
               <h2 className="text-2xl font-bold text-zinc-900 mb-2">
                 {step === 1 && "Registering Metadata..."}
-                {step === 2 && "Securing Storage Access..."}
+                {step === 2 && "Syncing Visual Assets..."}
                 {step === 3 && "Uploading Video Binary..."}
-                {step === 4 && "Finalizing & Launching Pipeline..."}
+                {step === 4 && "Finalizing & Launching..."}
               </h2>
               <p className="text-zinc-500 max-w-xs mx-auto">
                 {step <= 3
@@ -216,7 +251,7 @@ export default function VideoProcessingStatus(
                   </p>
                   <p className="text-sm font-bold text-indigo-600 animate-pulse">
                     {step === 1 && "Cataloging"}
-                    {step === 2 && "Handshaking"}
+                    {step === 2 && "Visualizing"}
                     {step === 3 && "Streaming"}
                     {step === 4 && "Broadcasting"}
                   </p>
@@ -282,7 +317,7 @@ export default function VideoProcessingStatus(
             <CardContent className="pt-6 space-y-6">
               {[
                 { s: 1, name: "1. Metadata Registration" },
-                { s: 2, name: "2. Secure Upload Token" },
+                { s: 2, name: "2. Visual Asset Upload" },
                 { s: 3, name: "3. Direct Binary Upload" },
                 { s: 4, name: "4. Trigger Processing" },
                 { s: 5, name: "5. Transcoding Engine" },

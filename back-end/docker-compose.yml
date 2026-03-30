@@ -41,15 +41,15 @@ services:
     volumes:
       - minio_data:/data
 
-  # --- Microservices ---
+  # --- Microservices (Natively Managed Context) ---
   admin-service:
     build:
-      context: ..
+      context: .
       dockerfile: admin-service/Dockerfile
     ports:
       - "${ADMIN_PORT:-8012}:${ADMIN_PORT:-8012}"
     env_file:
-      - ../.env
+      - .env
     depends_on:
       - kafka
       - redis
@@ -60,12 +60,12 @@ services:
 
   catalog-service:
     build:
-      context: ..
+      context: .
       dockerfile: catalog-service/Dockerfile
     ports:
       - "${CATALOG_PORT:-8003}:${CATALOG_PORT:-8003}"
     env_file:
-      - ../.env
+      - .env
     depends_on:
       - kafka
     environment:
@@ -76,12 +76,12 @@ services:
 
   auth-service:
     build:
-      context: ..
+      context: .
       dockerfile: auth-service/Dockerfile
     ports:
       - "${AUTH_PORT:-5002}:${AUTH_PORT:-5002}"
     env_file:
-      - ../.env
+      - .env
     depends_on:
       - redis
     environment:
@@ -96,15 +96,14 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-
   streaming-service:
     build:
-      context: ..
+      context: .
       dockerfile: streaming-service/Dockerfile
     ports:
       - "8005:8005"
     env_file:
-      - ../.env
+      - .env
     depends_on:
       - minio
     environment:
@@ -116,12 +115,12 @@ services:
 
   api-gateway:
     build:
-      context: ..
+      context: .
       dockerfile: api-gateway/Dockerfile
     ports:
       - "5001:5001"
     env_file:
-      - ../.env
+      - .env
     depends_on:
       - admin-service
       - catalog-service
@@ -139,6 +138,3 @@ services:
 volumes:
   redis_data:
   minio_data:
-
-
-
