@@ -17,6 +17,7 @@ var mongoEnvs = []string{
 func LoadMongoConfig() (MongoConfig, error) {
 	var cfg MongoConfig
 	viper.SetConfigFile(".env")
+	viper.AutomaticEnv() // Merge environment variables
 	if err := viper.ReadInConfig(); err != nil {
 		viper.SetConfigFile("../../.env")
 		viper.ReadInConfig()

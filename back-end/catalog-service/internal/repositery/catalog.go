@@ -3,12 +3,13 @@ package repositery
 import (
 	"context"
 
+	"time"
+
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
-
 
 type CatalogRepository interface {
 	CreateVideo(ctx context.Context, video *models.Content) error
@@ -18,7 +19,6 @@ type CatalogRepository interface {
 	Search(ctx context.Context, query string) ([]models.Content, error)
 }
 
-
 type mongoRepository struct {
 	db         *mongo.Database
 	collection *mongo.Collection
@@ -27,7 +27,7 @@ type mongoRepository struct {
 func NewCatalogRepository(db *mongo.Database) CatalogRepository {
 	return &mongoRepository{
 		db:         db,
-		collection: db.Collection("videos"),
+		collection: db.Collection("catalog_contents"),
 	}
 }
 
@@ -37,8 +37,20 @@ func (r *mongoRepository) CreateVideo(ctx context.Context, video *models.Content
 }
 
 func (r *mongoRepository) UpdateVideoStatus(ctx context.Context, videoID string, hlsURL string, status string) error {
-	// Implementation for updating video status
-	return nil
+	objID, err := primitive.ObjectIDFromHex(videoID)
+	if err != nil {
+		return err
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"status":                   status,
+			"streaming.hls_master_url": hlsURL,
+			"is_published":             status == "published" || status == "completed",
+			"updated_at":               time.Now(),
+		},
+	}
+	_, err = r.collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
+	return err
 }
 
 func (r *mongoRepository) GetAll(ctx context.Context) ([]models.Content, error) {
@@ -76,4 +88,3 @@ func (r *mongoRepository) Search(ctx context.Context, query string) ([]models.Co
 	err = cursor.All(ctx, &results)
 	return results, err
 }
-

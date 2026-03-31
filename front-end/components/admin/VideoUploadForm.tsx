@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { adminService } from "@/serivces/admin.service";
 
 const TextareaFallback = (props: any) => (
   <textarea
@@ -167,7 +168,7 @@ export default function VideoUploadForm({
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.videoFile || !formData.title.default || !formData.posterFile || !formData.bannerFile) {
       setError(
         "Please provide a title, poster, banner, and select a video file.",
@@ -175,6 +176,9 @@ export default function VideoUploadForm({
       return;
     }
     setError(null);
+    setLoading(true);
+
+    // Prepare final JSON structure with proper date formatting for Go
 
     // Prepare final JSON structure with proper date formatting for Go
     const finalData = { ...formData };
@@ -193,8 +197,21 @@ export default function VideoUploadForm({
       finalData.live.end_time = new Date(finalData.live.end_time).toISOString();
     }
 
-    console.log("🚀 Submitting Content Metadata:", finalData);
-    onSuccess(finalData); // pass formatted data
+    try {
+      console.log("🚀 Submitting Content Metadata:", finalData);
+      const response = await adminService.addContent(finalData);
+      
+      if (!response.id) {
+        throw new Error("Failed to get a valid content ID from server.");
+      }
+
+      onSuccess({ ...finalData, videoID: response.id }); // pass data with the established ID
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setError(err.message || "Failed to register content metadata.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -43,8 +43,14 @@ export const adminService = {
   },
 
   getContentStatus: async (id: string) => {
-    const response = await apiClient.get(`${API_ENDPOINTS.ADMIN.ADD_CONTENT}/${id}`);
+    const response = await apiClient.get(
+      `${API_ENDPOINTS.ADMIN.ADD_CONTENT}/${id}`,
+    );
     return response.data;
+  },
+
+  getNotificationUrl: (videoID: string) => {
+    return `http://localhost:8008/api/notifications/events/${videoID}`;
   },
 
   uploadToMinio: async (

@@ -21,7 +21,7 @@ type videoRepository struct {
 
 func NewVideoRepository() VideoRepository {
 	return &videoRepository{
-		collection: config.GetCollection("content"),
+		collection: config.GetCollection("admin_contents"),
 	}
 }
 

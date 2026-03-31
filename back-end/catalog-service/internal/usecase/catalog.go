@@ -14,6 +14,7 @@ type CatalogUseCase interface {
 	GetAllContent(ctx context.Context) ([]models.Content, error)
 	GetContentByID(ctx context.Context, id string) (*models.Content, error)
 	SearchContent(ctx context.Context, query string) ([]models.Content, error)
+	UpdateStatus(ctx context.Context, videoID, hlsURL, status string) error
 }
 
 type catalogUseCase struct {
@@ -25,14 +26,15 @@ func NewCatalogUseCase(repo repositery.CatalogRepository) CatalogUseCase {
 }
 
 func (u *catalogUseCase) CreateVideoRecord(ctx context.Context, title, description string) (*models.Content, error) {
+	now := time.Now()
 	video := &models.Content{
 		Title: models.LocalizedTitle{
 			Default: title,
 		},
 		Description: description,
 		Status:      "processing",
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		CreatedAt:   &now,
+		UpdatedAt:   &now,
 	}
 
 	err := u.repo.CreateVideo(ctx, video)
@@ -40,8 +42,9 @@ func (u *catalogUseCase) CreateVideoRecord(ctx context.Context, title, descripti
 }
 
 func (u *catalogUseCase) CreateVideoRecordFromContent(ctx context.Context, content *models.Content) error {
-	content.CreatedAt = time.Now()
-	content.UpdatedAt = time.Now()
+	now := time.Now()
+	content.CreatedAt = &now
+	content.UpdatedAt = &now
 	// Ensure status is processing initially if not set
 	if content.Status == "" {
 		content.Status = "processing"
@@ -59,4 +62,8 @@ func (u *catalogUseCase) GetContentByID(ctx context.Context, id string) (*models
 
 func (u *catalogUseCase) SearchContent(ctx context.Context, query string) ([]models.Content, error) {
 	return u.repo.Search(ctx, query)
+}
+
+func (u *catalogUseCase) UpdateStatus(ctx context.Context, videoID, hlsURL, status string) error {
+	return u.repo.UpdateVideoStatus(ctx, videoID, hlsURL, status)
 }

@@ -36,10 +36,10 @@ type Season struct {
 }
 
 type LiveInfo struct {
-	IsLive      bool      `bson:"is_live" json:"is_live"`
-	StartTime   time.Time `bson:"start_time" json:"start_time"`
-	EndTime     time.Time `bson:"end_time" json:"end_time"`
-	StreamStatus string    `bson:"stream_status" json:"stream_status"` // upcoming | live | ended
+	IsLive       bool       `bson:"is_live" json:"is_live"`
+	StartTime    *time.Time `bson:"start_time" json:"start_time"`
+	EndTime      *time.Time `bson:"end_time" json:"end_time"`
+	StreamStatus string     `bson:"stream_status" json:"stream_status"` // upcoming | live | ended
 }
 
 type StreamingInfo struct {
@@ -51,9 +51,9 @@ type StreamingInfo struct {
 }
 
 type Availability struct {
-	PlanRequired   string    `bson:"plan_required" json:"plan_required"` // basic | premium | free
-	AvailableFrom  time.Time `bson:"available_from" json:"available_from"`
-	AvailableUntil time.Time `bson:"available_until" json:"available_until"`
+	PlanRequired   string     `bson:"plan_required" json:"plan_required"` // basic | premium | free
+	AvailableFrom  *time.Time `bson:"available_from" json:"available_from"`
+	AvailableUntil *time.Time `bson:"available_until" json:"available_until"`
 }
 
 type Stats struct {
@@ -71,7 +71,7 @@ type Content struct {
 	Description     string             `bson:"description" json:"description"`
 	Genres          []string           `bson:"genres" json:"genres"`
 	Languages       []string           `bson:"languages" json:"languages"`
-	ReleaseDate     time.Time          `bson:"release_date" json:"release_date"`
+	ReleaseDate     *time.Time         `bson:"release_date" json:"release_date"`
 	AgeRating       string             `bson:"age_rating" json:"age_rating"`
 	DurationMinutes int                `bson:"duration_minutes" json:"duration_minutes"`
 
@@ -91,7 +91,7 @@ type Content struct {
 	Availability Availability  `bson:"availability" json:"availability"`
 	Stats        Stats         `bson:"stats" json:"stats"`
 
-	IsPublished bool      `bson:"is_published" json:"is_published"`
-	CreatedAt   time.Time `bson:"created_at" json:"created_at"`
-	UpdatedAt   time.Time `bson:"updated_at" json:"updated_at"`
+	IsPublished bool       `bson:"is_published" json:"is_published"`
+	CreatedAt   *time.Time `bson:"created_at" json:"created_at"`
+	UpdatedAt   *time.Time `bson:"updated_at" json:"updated_at"`
 }

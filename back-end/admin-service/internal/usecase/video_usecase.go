@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"time"
 	"github.com/krishpatel09/streaming-platform/admin-service/internal/repository"
 	"github.com/krishpatel09/streaming-platform/shared/pkg/kafka"
 	"go.mongodb.org/mongo-driver/bson"
@@ -31,6 +32,13 @@ func (u *videoUseCase) AddContent(ctx context.Context, content bson.M) (interfac
 		return nil, err
 	}
 
+	// Add the generated ID to the content map so Catalog Service/Kafka receives it
+	now := time.Now()
+	content["id"] = id
+	content["status"] = "processing"
+	content["created_at"] = now
+	content["updated_at"] = now
+	
 	// Emit Kafka Event
 	contentBytes, _ := json.Marshal(content)
 	u.producer.SendMessage(ctx, kafka.ContentAddedTopic, nil, contentBytes)

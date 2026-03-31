@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-
 	"github.com/gin-gonic/gin"
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/api/handler"
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/api/router"
@@ -34,7 +33,8 @@ func main() {
 		brokerStr = "localhost:9092"
 	}
 	brokers := []string{brokerStr}
-	consumer := kafka.NewConsumer(brokers, "catalog-group", kafka.ContentAddedTopic)
+	topics := []string{kafka.ContentAddedTopic, kafka.TranscodingCompletedTopic}
+	consumer := kafka.NewConsumer(brokers, "catalog-group", topics...)
 	defer consumer.Close()
 
 	// 4. Initialize Layers
@@ -60,4 +60,3 @@ func main() {
 		log.Fatalf("failed to start server: %v", err)
 	}
 }
-

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   CheckCircle2,
   AlertCircle,
@@ -44,35 +44,40 @@ interface VideoProcessingStatusProps {
   trailerFile?: File | null;
   posterFile?: File | null;
   bannerFile?: File | null;
+  videoID?: string;
   onClose: () => void;
 }
 
 export default function VideoProcessingStatus(
   props: VideoProcessingStatusProps,
 ) {
-  const { title, videoFile, trailerFile, posterFile, bannerFile, onClose } = props;
+  const {
+    title,
+    videoFile,
+    trailerFile,
+    posterFile,
+    bannerFile,
+    onClose,
+    videoID: propVideoID,
+  } = props;
   const [step, setStep] = useState(0); // 1: Metadata, 2: Assets, 3: Binary, 4: Notifying, 5: Success
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const isStarted = useRef(false);
 
   useEffect(() => {
     const startProcess = async () => {
+      if (isStarted.current) return;
+      isStarted.current = true;
+
       try {
         setLoading(true);
         setError(null);
 
-        // Step 1: Register Metadata (Admin Service)
-        setStep(1);
-        const metadataPayload = { ...props };
-        delete (metadataPayload as any).videoFile;
-        delete (metadataPayload as any).onClose;
-
-        const metadataResponse = await adminService.addContent(metadataPayload);
-
-        const videoID = metadataResponse.id;
+        const videoID = propVideoID;
         if (!videoID)
-          throw new Error("Backend did not return a valid content ID");
+          throw new Error("No Video ID provided to processing status");
 
         // Step 2: Upload Assets (Poster, Banner, Trailer)
         setStep(2);
@@ -81,30 +86,54 @@ export default function VideoProcessingStatus(
 
         if (posterFile) {
           console.log("🖼️ Uploading Poster...");
-          const posterUrlData = await adminService.getUploadUrl(videoID, "poster");
-          await adminService.uploadToMinio(posterUrlData.upload_url, posterFile, (p) => setUploadProgress(p));
+          const posterUrlData = await adminService.getUploadUrl(
+            videoID,
+            "poster",
+          );
+          await adminService.uploadToMinio(
+            posterUrlData.upload_url,
+            posterFile,
+            (p) => setUploadProgress(p),
+          );
           finalPosterPath = posterUrlData.storage_path;
           setUploadProgress(0);
         }
 
         if (bannerFile) {
           console.log("🖼️ Uploading Banner...");
-          const bannerUrlData = await adminService.getUploadUrl(videoID, "banner");
-          await adminService.uploadToMinio(bannerUrlData.upload_url, bannerFile, (p) => setUploadProgress(p));
+          const bannerUrlData = await adminService.getUploadUrl(
+            videoID,
+            "banner",
+          );
+          await adminService.uploadToMinio(
+            bannerUrlData.upload_url,
+            bannerFile,
+            (p) => setUploadProgress(p),
+          );
           finalBannerPath = bannerUrlData.storage_path;
           setUploadProgress(0);
         }
 
         if (trailerFile) {
           console.log("🎬 Uploading Trailer...");
-          const trailerUrlData = await adminService.getUploadUrl(videoID, "trailer");
-          await adminService.uploadToMinio(trailerUrlData.upload_url, trailerFile, (p) => setUploadProgress(p));
+          const trailerUrlData = await adminService.getUploadUrl(
+            videoID,
+            "trailer",
+          );
+          await adminService.uploadToMinio(
+            trailerUrlData.upload_url,
+            trailerFile,
+            (p) => setUploadProgress(p),
+          );
           setUploadProgress(0);
         }
 
         // Step 3: Direct binary upload for Main Video
         setStep(3);
-        const { upload_url, storage_path } = await adminService.getUploadUrl(videoID, "source");
+        const { upload_url, storage_path } = await adminService.getUploadUrl(
+          videoID,
+          "source",
+        );
         await adminService.uploadToMinio(upload_url, videoFile, (percent) => {
           setUploadProgress(percent);
         });
@@ -126,28 +155,35 @@ export default function VideoProcessingStatus(
           storage_path: storage_path,
         });
 
-        // Step 5: Transcoding Pipeline Integration
+        // Step 5: Transcoding Pipeline Implementation (SSE Push)
         setStep(5);
-        // Polling for transcoding status
-        let isPublished = false;
-        let retryCount = 0;
-        const maxRetries = 20;
-
-        while (!isPublished && retryCount < maxRetries) {
-          try {
-            const statusData = await adminService.getContentStatus(videoID);
-            if (statusData.status === "published") {
-              isPublished = true;
-              break;
+        await new Promise<void>((resolve, reject) => {
+          const eventSource = new EventSource(
+            adminService.getNotificationUrl(videoID),
+          );
+          eventSource.onmessage = (event) => {
+            const data = event.data.trim();
+            if (data === "completed") {
+              console.log("✅ Transcoding finished! Signal received via SSE.");
+              eventSource.close();
+              setLoading(false);
+              resolve();
             }
-          } catch (e) {
-            console.warn("Retrying status check...", e);
-          }
-          retryCount++;
-          await new Promise((r) => setTimeout(r, 3000)); // Poll every 3 seconds
-        }
+          };
+          eventSource.onerror = (err) => {
+            console.error("SSE Connection Error:", err);
+            eventSource.close();
+            // Optional: fallback to poll if SSE fails, but here we show error
+            reject(new Error("Lost connection to notification service."));
+          };
+          // Timeout after 10 mins
+          setTimeout(() => {
+            eventSource.close();
+            reject(new Error("Transcoding timed out."));
+          }, 600000);
+        });
 
-        setStep(6); // Final Success
+        setStep(7); // Final Success (All checks green)
       } catch (err: any) {
         console.error("Upload error:", err);
         setError(
@@ -187,7 +223,7 @@ export default function VideoProcessingStatus(
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
-          {step < 5 && !error && (
+          {step < 6 && !error && (
             <Card className="border-0 shadow-xl shadow-zinc-200/50 bg-white p-12 flex flex-col items-center justify-center text-center">
               <div className="relative h-40 w-40 mb-8">
                 <svg className="h-full w-full" viewBox="0 0 100 100">
@@ -260,7 +296,7 @@ export default function VideoProcessingStatus(
             </Card>
           )}
 
-          {step === 5 && (
+          {step >= 6 && (
             <Card className="border-0 shadow-xl shadow-zinc-200/50 bg-white p-12 flex flex-col items-center justify-center text-center scale-in duration-500">
               <div className="h-24 w-24 rounded-full bg-emerald-100 flex items-center justify-center mb-8 shadow-inner">
                 <CheckCircle2 className="h-12 w-12 text-emerald-600" />

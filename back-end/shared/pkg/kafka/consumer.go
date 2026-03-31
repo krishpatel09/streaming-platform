@@ -17,12 +17,12 @@ type kafkaConsumer struct {
 	reader *kafka.Reader
 }
 
-func NewConsumer(brokers []string, groupID string, topic string) Consumer {
+func NewConsumer(brokers []string, groupID string, topics ...string) Consumer {
 	return &kafkaConsumer{
 		reader: kafka.NewReader(kafka.ReaderConfig{
 			Brokers:        brokers,
 			GroupID:        groupID,
-			Topic:          topic,
+			GroupTopics:    topics,
 			MinBytes:       10e3, // 10KB
 			MaxBytes:       10e6, // 10MB
 			MaxWait:        1 * time.Second,

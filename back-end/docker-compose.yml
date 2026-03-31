@@ -70,7 +70,7 @@ services:
       - kafka
     environment:
       - MONGO_URL=${CATALOG_MONGO_URI:-mongodb://host.docker.internal:27017}
-      - MONGO_DATABASE=${CATALOG_MONGO_DB:-catalog_db}
+      - MONGO_DATABASE=${CATALOG_MONGO_DB:-streamin-platform}
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -132,6 +132,41 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:5002
       - USER_SERVICE_URL=http://auth-service:5002
       - STREAMING_SERVICE_URL=http://streaming-service:8005
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    ports:
+      - "8008:8008"
+    env_file:
+      - .env
+    depends_on:
+      - kafka
+    environment:
+      - NOTIFICATION_PORT=8008
+      - KAFKA_BROKERS=kafka:29092
+      - DATABASE_URL=mongodb://host.docker.internal:27017
+      - DATABASE_NAME=streamin-platform
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+ 
+  transcoding-service:
+    build:
+      context: .
+      dockerfile: transcoding-service/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - kafka
+      - minio
+    environment:
+      - KAFKA_BROKERS=kafka:29092
+      - STORAGE_ENDPOINT=minio:9000
+      - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:-minioadmin}
+      - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:-minioadmin}
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
