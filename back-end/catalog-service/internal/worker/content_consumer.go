@@ -38,11 +38,11 @@ func (c *ContentConsumer) Start(ctx context.Context) {
 				log.Printf("Error unmarshaling content: %v", err)
 				continue
 			}
-			log.Printf("New Content Received: %s (ID: %s)", content.Title.Default, content.ID.Hex())
+			log.Printf("📥 New Content Received: %s (ID: %s)", content.Title.Default, content.ID.Hex())
 			if err := c.useCase.CreateVideoRecordFromContent(ctx, &content); err != nil {
-				log.Printf("❌ FAILED to save content to catalog: %v", err)
+				log.Printf("❌ FAILED to save content to catalog_contents: %v", err)
 			} else {
-				log.Printf("✅ SUCCESS: Content saved to catalog_contents!")
+				log.Printf("✅ SUCCESS: Content '%s' saved to MongoDB catalog_contents!", content.Title.Default)
 			}
 
 		case kafka.TranscodingCompletedTopic:
@@ -50,13 +50,19 @@ func (c *ContentConsumer) Start(ctx context.Context) {
 				VideoID string `json:"video_id"`
 				HLSURL  string `json:"hls_url"`
 				Status  string `json:"status"`
+				Type    string `json:"type"`
 			}
 			if err := json.Unmarshal(msg.Value, &event); err != nil {
 				log.Printf("Error unmarshaling processed event: %v", err)
 				continue
 			}
-			log.Printf("✅ Transcoding Completed for Video: %s", event.VideoID)
-			if err := c.useCase.UpdateStatus(ctx, event.VideoID, event.HLSURL, "published"); err != nil {
+
+			if event.Type == "" {
+				event.Type = "source"
+			}
+
+			log.Printf("✅ Transcoding Completed for %s: %s", event.Type, event.VideoID)
+			if err := c.useCase.UpdateStatus(ctx, event.VideoID, event.HLSURL, "published", event.Type); err != nil {
 				log.Printf("Error updating status for video %s: %v", event.VideoID, err)
 			}
 		}

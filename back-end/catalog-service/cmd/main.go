@@ -3,14 +3,13 @@ package main
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/api/handler"
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/api/router"
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/config"
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/db"
-	"github.com/krishpatel09/streaming-platform/catalog-service/internal/repositery"
+	"github.com/krishpatel09/streaming-platform/catalog-service/internal/repository"
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/usecase"
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/worker"
 	"github.com/krishpatel09/streaming-platform/shared/pkg/kafka"
@@ -28,7 +27,7 @@ func main() {
 	database := client.Database(mongoCfg.MongoDB)
 
 	// 3. Initialize Kafka Consumer
-	brokerStr := os.Getenv("KAFKA_BROKERS")
+	brokerStr := mongoCfg.KafkaBrokers
 	if brokerStr == "" {
 		brokerStr = "localhost:9092"
 	}
@@ -38,7 +37,7 @@ func main() {
 	defer consumer.Close()
 
 	// 4. Initialize Layers
-	repo := repositery.NewCatalogRepository(database)
+	repo := repository.NewCatalogRepository(database)
 	uc := usecase.NewCatalogUseCase(repo)
 	h := handler.NewCatalogHandler(uc)
 
@@ -47,7 +46,7 @@ func main() {
 	go contentWorker.Start(context.Background())
 
 	// 6. Setup Server
-	port := os.Getenv("CATALOG_PORT")
+	port := mongoCfg.Port
 	if port == "" {
 		port = "8003"
 	}

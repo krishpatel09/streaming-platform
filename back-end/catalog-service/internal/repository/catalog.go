@@ -1,19 +1,19 @@
-package repositery
+package repository
 
 import (
 	"context"
-
 	"time"
 
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type CatalogRepository interface {
 	CreateVideo(ctx context.Context, video *models.Content) error
-	UpdateVideoStatus(ctx context.Context, videoID string, hlsURL string, status string) error
+	UpdateVideoStatus(ctx context.Context, videoID string, hlsURL string, status string, mediaType string) error
 	GetAll(ctx context.Context) ([]models.Content, error)
 	GetByID(ctx context.Context, id string) (*models.Content, error)
 	Search(ctx context.Context, query string) ([]models.Content, error)
@@ -32,23 +32,42 @@ func NewCatalogRepository(db *mongo.Database) CatalogRepository {
 }
 
 func (r *mongoRepository) CreateVideo(ctx context.Context, video *models.Content) error {
-	_, err := r.collection.InsertOne(ctx, video)
+	// Use Upsert to allow incremental metadata sync from Admin Panel
+	opts := options.Update().SetUpsert(true)
+	_, err := r.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": video.ID},
+		bson.M{"$set": video},
+		opts,
+	)
 	return err
 }
 
-func (r *mongoRepository) UpdateVideoStatus(ctx context.Context, videoID string, hlsURL string, status string) error {
+func (r *mongoRepository) UpdateVideoStatus(ctx context.Context, videoID string, hlsURL string, status string, mediaType string) error {
 	objID, err := primitive.ObjectIDFromHex(videoID)
 	if err != nil {
 		return err
 	}
+
+	updateField := "streaming.hls_master_url"
+	if mediaType == "trailer" {
+		updateField = "streaming.trailer_hls_url"
+	}
+
 	update := bson.M{
 		"$set": bson.M{
-			"status":                   status,
-			"streaming.hls_master_url": hlsURL,
-			"is_published":             status == "published" || status == "completed",
-			"updated_at":               time.Now(),
+			"status":     status,
+			updateField:  hlsURL,
+			"updated_at": time.Now(),
 		},
 	}
+
+	// Set default qualities if completed
+	if status == "published" || status == "completed" {
+		update["$set"].(bson.M)["is_published"] = true
+		update["$set"].(bson.M)["streaming.available_qualities"] = []string{"480p", "720p", "1080p"}
+	}
+
 	_, err = r.collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
 	return err
 }

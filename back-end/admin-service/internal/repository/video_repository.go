@@ -11,6 +11,8 @@ import (
 
 type VideoRepository interface {
 	Insert(ctx context.Context, content bson.M) (interface{}, error)
+	GetByID(ctx context.Context, id string) (bson.M, error)
+	GetAll(ctx context.Context) ([]bson.M, error)
 	Update(ctx context.Context, id string, data bson.M) error
 	Delete(ctx context.Context, id string) error
 }
@@ -31,6 +33,27 @@ func (r *videoRepository) Insert(ctx context.Context, content bson.M) (interface
 		return nil, err
 	}
 	return res.InsertedID, nil
+}
+
+func (r *videoRepository) GetByID(ctx context.Context, id string) (bson.M, error) {
+	objID, _ := primitive.ObjectIDFromHex(id)
+	var content bson.M
+	err := r.collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&content)
+	return content, err
+}
+
+func (r *videoRepository) GetAll(ctx context.Context) ([]bson.M, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []bson.M
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
 }
 
 func (r *videoRepository) Update(ctx context.Context, id string, data bson.M) error {

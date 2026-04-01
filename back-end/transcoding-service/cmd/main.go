@@ -17,12 +17,14 @@ type VideoUploadedEvent struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	StoragePath string `json:"storage_path"`
+	Type        string `json:"type"` // "source" or "trailer"
 }
 
 type VideoProcessedEvent struct {
 	VideoID string `json:"video_id"`
 	HLSURL  string `json:"hls_url"`
 	Status  string `json:"status"`
+	Type    string `json:"type"` // Pass through
 }
 
 func main() {
@@ -68,13 +70,22 @@ func main() {
 			continue
 		}
 
-		log.Printf("📥 Processing video: %s (%s)", event.Title, event.VideoID)
+		if event.Type == "" {
+			event.Type = "source"
+		}
+
+		log.Printf("📥 Processing %s: %s (%s)", event.Type, event.Title, event.VideoID)
 
 		// 4. SIMULATED TRANSCODING + STORAGE UPLOAD
 		// Upload a dummy master.m3u8 to the hls bucket
 		time.Sleep(5 * time.Second) // Simulate FFmpeg processing time
 
-		hlsPath := fmt.Sprintf("%s/master.m3u8", event.VideoID)
+		// Type-specific HLS path
+		hlsPath := fmt.Sprintf("%s/%s/master.m3u8", event.VideoID, event.Type)
+		if event.Type == "source" {
+			hlsPath = fmt.Sprintf("%s/master.m3u8", event.VideoID) // Maintain legacy path for main video
+		}
+
 		dummyManifest := "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=1280x720\nchunk_0.ts"
 
 		// Use a temporary file to upload to MinIO
@@ -84,7 +95,6 @@ func main() {
 		err = store.UploadFile(context.Background(), "hls", hlsPath, tmpFile, "application/x-mpegURL")
 		if err != nil {
 			log.Printf("❌ Failed to upload HLS manifest to MinIO: %v", err)
-			// Continue anyway for the "Success" signal flow
 		} else {
 			log.Printf("✅ Uploaded HLS manifest: hls/%s", hlsPath)
 		}
@@ -94,6 +104,7 @@ func main() {
 			VideoID: event.VideoID,
 			HLSURL:  fmt.Sprintf("http://localhost:9000/hls/%s", hlsPath),
 			Status:  "completed",
+			Type:    event.Type,
 		}
 		processedBytes, _ := json.Marshal(processedEvent)
 
@@ -103,6 +114,6 @@ func main() {
 			continue
 		}
 
-		log.Printf("Successfully processed video: %s", event.VideoID)
+		log.Printf("Successfully processed %s: %s", event.Type, event.VideoID)
 	}
 }

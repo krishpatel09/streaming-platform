@@ -12,6 +12,8 @@ func RegisterRoutes(r *gin.Engine, h *handler.VideoHandler) {
 		{
 			admin.POST("/upload", h.UploadVideo)
 			admin.POST("/content", h.AddContent)
+			admin.GET("/content", h.GetAllContent)
+			admin.GET("/content/:id", h.GetContentByID)
 			admin.PUT("/content/:id", h.UpdateContent)
 			admin.DELETE("/content/:id", h.DeleteContent)
 		}

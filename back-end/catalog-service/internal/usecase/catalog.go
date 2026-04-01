@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/krishpatel09/streaming-platform/catalog-service/internal/models"
-	"github.com/krishpatel09/streaming-platform/catalog-service/internal/repositery"
+	"github.com/krishpatel09/streaming-platform/catalog-service/internal/repository"
 )
 
 type CatalogUseCase interface {
@@ -14,14 +14,14 @@ type CatalogUseCase interface {
 	GetAllContent(ctx context.Context) ([]models.Content, error)
 	GetContentByID(ctx context.Context, id string) (*models.Content, error)
 	SearchContent(ctx context.Context, query string) ([]models.Content, error)
-	UpdateStatus(ctx context.Context, videoID, hlsURL, status string) error
+	UpdateStatus(ctx context.Context, videoID, hlsURL, status string, mediaType string) error
 }
 
 type catalogUseCase struct {
-	repo repositery.CatalogRepository
+	repo repository.CatalogRepository
 }
 
-func NewCatalogUseCase(repo repositery.CatalogRepository) CatalogUseCase {
+func NewCatalogUseCase(repo repository.CatalogRepository) CatalogUseCase {
 	return &catalogUseCase{repo: repo}
 }
 
@@ -43,8 +43,12 @@ func (u *catalogUseCase) CreateVideoRecord(ctx context.Context, title, descripti
 
 func (u *catalogUseCase) CreateVideoRecordFromContent(ctx context.Context, content *models.Content) error {
 	now := time.Now()
-	content.CreatedAt = &now
+	// Preserving original CreatedAt if provided by Admin Panel
+	if content.CreatedAt == nil {
+		content.CreatedAt = &now
+	}
 	content.UpdatedAt = &now
+	
 	// Ensure status is processing initially if not set
 	if content.Status == "" {
 		content.Status = "processing"
@@ -64,6 +68,6 @@ func (u *catalogUseCase) SearchContent(ctx context.Context, query string) ([]mod
 	return u.repo.Search(ctx, query)
 }
 
-func (u *catalogUseCase) UpdateStatus(ctx context.Context, videoID, hlsURL, status string) error {
-	return u.repo.UpdateVideoStatus(ctx, videoID, hlsURL, status)
+func (u *catalogUseCase) UpdateStatus(ctx context.Context, videoID, hlsURL, status string, mediaType string) error {
+	return u.repo.UpdateVideoStatus(ctx, videoID, hlsURL, status, mediaType)
 }

@@ -9,6 +9,8 @@ import {
   Trash2,
   Filter,
   Eye,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import {
   Table,
@@ -31,30 +33,74 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { mockMovies } from "@/data/mock-data";
+import { adminService } from "@/serivces/admin.service";
 import Image from "next/image";
+import { toast } from "sonner";
+import EditContentModal from "@/components/admin/EditContentModal";
+import VideoUploadForm from "@/components/admin/VideoUploadForm";
+import VideoProcessingStatus from "@/components/admin/VideoProcessingStatus";
 
 export default function MoviesPage() {
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [open, setOpen] = React.useState(false);
+  const [movies, setMovies] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  
+  // Modals state
+  const [showAddModal, setShowAddModal] = React.useState(false);
+  const [showEditModal, setShowEditModal] = React.useState(false);
+  const [showStatusModal, setShowStatusModal] = React.useState(false);
+  const [selectedContentId, setSelectedContentId] = React.useState<string | null>(null);
+  const [uploadData, setUploadData] = React.useState<any>(null);
 
-  const filteredMovies = mockMovies.filter((movie) =>
-    movie.title.toLowerCase().includes(searchTerm.toLowerCase())
+  const fetchMovies = async () => {
+    setLoading(true);
+    try {
+      const data = await adminService.getAllContent();
+      // Filter for movies only
+      const filtered = data.filter((item: any) => item.type === "movie");
+      setMovies(filtered);
+    } catch (error) {
+      toast.error("Failed to fetch movies from server");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchMovies();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this movie?")) return;
+    try {
+      await adminService.deleteContent(id);
+      toast.success("Movie deleted");
+      fetchMovies();
+    } catch (error) {
+      toast.error("Failed to delete movie");
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    setSelectedContentId(id);
+    setShowEditModal(true);
+  };
+
+  const handleUploadSuccess = (data: any) => {
+    setUploadData(data);
+    setShowAddModal(false);
+    setShowStatusModal(true);
+    fetchMovies();
+  };
+
+  const filteredMovies = movies.filter((movie) =>
+    (movie.title?.default || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -62,47 +108,65 @@ export default function MoviesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Movies Management</h1>
-          <p className="text-zinc-500">Add, edit, and organize your platform's movies.</p>
+          <p className="text-zinc-500">Manage feature films and their metadata.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
-              <Plus className="mr-2 h-4 w-4" /> Add Movie
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] bg-white border-zinc-200 text-zinc-900 shadow-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Add New Movie</DialogTitle>
-              <DialogDescription className="text-zinc-500">
-                Enter movie details below. Click save when you're done.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-6 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="title" className="text-right text-zinc-700 font-medium">Title</Label>
-                <Input id="title" className="col-span-3 bg-zinc-50 border-zinc-200 focus:bg-white" />
+        
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={fetchMovies}
+            className="border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+
+          <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+            <DialogTrigger asChild>
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
+                <Plus className="mr-2 h-4 w-4" /> Add Movie
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto bg-white border-zinc-200 p-0 text-zinc-900">
+              <DialogHeader className="sr-only">
+                <DialogTitle>Add New Movie</DialogTitle>
+                <DialogDescription>Create a new movie record and start uploading.</DialogDescription>
+              </DialogHeader>
+              <div className="p-6">
+                <VideoUploadForm 
+                  onSuccess={handleUploadSuccess} 
+                  onClose={() => setShowAddModal(false)} 
+                />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="language" className="text-right text-zinc-700 font-medium">Language</Label>
-                <Select>
-                  <SelectTrigger className="col-span-3 bg-zinc-50 border-zinc-200 focus:bg-white text-zinc-900">
-                    <SelectValue placeholder="Select Language" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-zinc-200">
-                    <SelectItem value="english">English</SelectItem>
-                    <SelectItem value="hindi">Hindi</SelectItem>
-                    <SelectItem value="korean">Korean</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)} className="border-zinc-200 hover:bg-zinc-100">Cancel</Button>
-              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white">Save movie</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      {/* Status Modal for active uploads */}
+      <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
+        <DialogContent className="max-w-5xl h-[90vh] overflow-y-auto bg-white border-zinc-200 p-0 text-zinc-900">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Upload Status</DialogTitle>
+          </DialogHeader>
+          <div className="p-6">
+            {uploadData && (
+              <VideoProcessingStatus 
+                {...uploadData} 
+                onClose={() => setShowStatusModal(false)} 
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unified Edit Modal */}
+      <EditContentModal 
+        isOpen={showEditModal}
+        contentId={selectedContentId}
+        onClose={() => setShowEditModal(false)}
+        onSuccess={fetchMovies}
+      />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
         <div className="relative w-full max-w-sm">
@@ -115,67 +179,111 @@ export default function MoviesPage() {
           />
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="border-zinc-200 text-zinc-600 hover:bg-zinc-50">
+          <Button variant="outline" size="sm" className="border-zinc-200 text-zinc-600 hover:bg-zinc-50 font-semibold">
             <Filter className="mr-2 h-4 w-4" /> Filter
           </Button>
         </div>
       </div>
 
       <Card className="border-zinc-200 bg-white shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader className="bg-zinc-50/80">
-            <TableRow className="border-zinc-200 hover:bg-transparent text-zinc-900">
-              <TableHead className="w-[100px] text-zinc-500 uppercase text-[10px] font-bold tracking-wider">Thumbnail</TableHead>
-              <TableHead className="text-zinc-500 uppercase text-[10px] font-bold tracking-wider">Title</TableHead>
-              <TableHead className="text-zinc-500 uppercase text-[10px] font-bold tracking-wider">Language</TableHead>
-              <TableHead className="text-zinc-500 uppercase text-[10px] font-bold tracking-wider">Year</TableHead>
-              <TableHead className="text-zinc-500 uppercase text-[10px] font-bold tracking-wider">Status</TableHead>
-              <TableHead className="text-zinc-500 uppercase text-[10px] font-bold tracking-wider">Views</TableHead>
-              <TableHead className="text-right text-zinc-500 uppercase text-[10px] font-bold tracking-wider">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredMovies.map((movie) => (
-              <TableRow key={movie.id} className="border-zinc-100 hover:bg-zinc-50/50 transition-colors">
-                <TableCell>
-                  <div className="relative h-12 w-20 rounded-lg overflow-hidden border border-zinc-200 shadow-sm">
-                    <Image src={movie.thumbnail} alt={movie.title} fill className="object-cover" />
-                  </div>
-                </TableCell>
-                <TableCell className="font-semibold text-zinc-900">{movie.title}</TableCell>
-                <TableCell className="text-zinc-600">{movie.language}</TableCell>
-                <TableCell className="text-zinc-600">{movie.releaseYear}</TableCell>
-                <TableCell>
-                  <Badge className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[10px] font-bold">
-                    {movie.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-zinc-600 font-medium">{movie.views}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-white border-zinc-200 shadow-lg text-zinc-900">
-                      <DropdownMenuItem className="hover:bg-zinc-50 cursor-pointer">
-                        <Eye className="mr-2 h-4 w-4 text-zinc-400" /> View content
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="hover:bg-zinc-50 cursor-pointer">
-                        <Edit className="mr-2 h-4 w-4 text-zinc-400" /> Edit movie
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-zinc-100" />
-                      <DropdownMenuItem className="text-red-500 focus:text-red-500 hover:bg-red-50 cursor-pointer">
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete movie
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+            <p className="text-sm text-zinc-500 font-medium">Fetching movies...</p>
+          </div>
+        ) : filteredMovies.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+            <div className="bg-zinc-50 p-4 rounded-full mb-4">
+              <Plus className="h-8 w-8 text-zinc-300" />
+            </div>
+            <h3 className="text-zinc-900 font-bold text-lg">No movies found</h3>
+            <p className="text-zinc-500 max-w-xs mx-auto">
+              {searchTerm ? "Try a different search term or clear the filter." : "Get started by adding your first movie to the library."}
+            </p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader className="bg-zinc-50/80">
+              <TableRow className="border-zinc-200 hover:bg-transparent text-zinc-900">
+                <TableHead className="w-[100px] text-zinc-400 uppercase text-[10px] font-bold tracking-wider">Thumbnail</TableHead>
+                <TableHead className="text-zinc-400 uppercase text-[10px] font-bold tracking-wider">Title</TableHead>
+                <TableHead className="text-zinc-400 uppercase text-[10px] font-bold tracking-wider">Slug</TableHead>
+                <TableHead className="text-zinc-400 uppercase text-[10px] font-bold tracking-wider">Type</TableHead>
+                <TableHead className="text-zinc-400 uppercase text-[10px] font-bold tracking-wider">Status</TableHead>
+                <TableHead className="text-zinc-400 uppercase text-[10px] font-bold tracking-wider text-center">Duration</TableHead>
+                <TableHead className="text-right text-zinc-400 uppercase text-[10px] font-bold tracking-wider">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredMovies.map((movie) => (
+                <TableRow key={movie._id || movie.id} className="border-zinc-100 hover:bg-zinc-50/50 transition-colors">
+                  <TableCell>
+                    <div className="relative h-12 w-20 rounded-lg overflow-hidden border border-zinc-200 shadow-sm bg-zinc-100">
+                      {(movie.poster_url || movie.thumbnail) && (
+                        <Image 
+                          src={movie.poster_url || movie.thumbnail} 
+                          alt={movie.title?.default || "No title"} 
+                          fill 
+                          className="object-cover" 
+                        />
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-semibold text-zinc-900">
+                    {movie.title?.default || "Untitled"}
+                  </TableCell>
+                  <TableCell>
+                     <code className="text-[10px] bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-500 font-mono">
+                       {movie.slug || "-"}
+                     </code>
+                  </TableCell>
+                  <TableCell className="capitalize text-zinc-600 text-xs font-medium">
+                    {movie.type}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={`text-[10px] font-bold uppercase ${
+                      movie.status === 'published' || movie.status === 'completed' 
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                        : 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                    }`}>
+                      {movie.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-zinc-600 font-medium text-xs text-center">
+                    {movie.duration_minutes || movie.duration}m
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-white border-zinc-200 shadow-xl text-zinc-900 min-w-[160px]">
+                        <DropdownMenuItem className="hover:bg-zinc-50 cursor-pointer text-xs font-medium py-2">
+                          <Eye className="mr-2 h-4 w-4 text-zinc-400" /> View in App
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="hover:bg-zinc-50 cursor-pointer text-xs font-medium py-2"
+                          onClick={() => handleEdit(movie._id || movie.id)}
+                        >
+                          <Edit className="mr-2 h-4 w-4 text-zinc-400" /> Edit Metadata
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="bg-zinc-100" />
+                        <DropdownMenuItem 
+                          className="text-red-500 focus:text-red-500 hover:bg-red-50 cursor-pointer text-xs font-semibold py-2"
+                          onClick={() => handleDelete(movie._id || movie.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete Movie
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </Card>
     </div>
   );

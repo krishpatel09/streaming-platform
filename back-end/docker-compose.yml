@@ -69,8 +69,10 @@ services:
     depends_on:
       - kafka
     environment:
-      - MONGO_URL=${CATALOG_MONGO_URI:-mongodb://host.docker.internal:27017}
-      - MONGO_DATABASE=${CATALOG_MONGO_DB:-streamin-platform}
+      - CATALOG_MONGO_URI=${CATALOG_MONGO_URI:-mongodb://host.docker.internal:27017}
+      - CATALOG_MONGO_DB=${CATALOG_MONGO_DB:-streaming-platform}
+      - KAFKA_BROKERS=${KAFKA_BROKERS:-kafka:29092}
+      - CATALOG_PORT=${CATALOG_PORT:-8003}
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -149,7 +151,7 @@ services:
       - NOTIFICATION_PORT=8008
       - KAFKA_BROKERS=kafka:29092
       - DATABASE_URL=mongodb://host.docker.internal:27017
-      - DATABASE_NAME=streamin-platform
+      - DATABASE_NAME=streaming-platform
     extra_hosts:
       - "host.docker.internal:host-gateway"
  

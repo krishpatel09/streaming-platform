@@ -59,14 +59,9 @@ const navItems = [
         icon: Film,
       },
       {
-        title: "TV Shows",
+        title: "Series",
         url: "/admin/content/series",
         icon: Tv,
-      },
-      {
-        title: "Episodes",
-        url: "/admin/content/episodes",
-        icon: Radio,
       },
     ],
   },

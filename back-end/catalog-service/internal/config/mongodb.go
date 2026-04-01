@@ -6,12 +6,14 @@ import (
 )
 
 type MongoConfig struct {
-	MongoUrl string `mapstructure:"MONGO_URL"`
-	MongoDB  string `mapstructure:"MONGO_DATABASE"`
+	MongoUrl     string `mapstructure:"CATALOG_MONGO_URI"`
+	MongoDB      string `mapstructure:"CATALOG_MONGO_DB"`
+	KafkaBrokers string `mapstructure:"KAFKA_BROKERS"`
+	Port         string `mapstructure:"CATALOG_PORT"`
 }
 
 var mongoEnvs = []string{
-	"MONGO_URL", "MONGO_DATABASE",
+	"CATALOG_MONGO_URI", "CATALOG_MONGO_DB", "KAFKA_BROKERS", "CATALOG_PORT",
 }
 
 func LoadMongoConfig() (MongoConfig, error) {

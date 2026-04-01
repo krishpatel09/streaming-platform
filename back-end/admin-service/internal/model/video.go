@@ -6,8 +6,8 @@ type VideoUploadRequest struct {
 }
 
 type VideoUploadResponse struct {
-	VideoID     string `json:"video_id"`
-	UploadURL   string `json:"upload_url"`
+	VideoID   string `json:"video_id"`
+	UploadURL string `json:"upload_url"`
 }
 
 type VideoUploadedEvent struct {

@@ -13,6 +13,16 @@ export const adminService = {
     return response.data;
   },
 
+  getAllContent: async () => {
+    const response = await apiClient.get(API_ENDPOINTS.ADMIN.ADD_CONTENT);
+    return response.data;
+  },
+
+  getContentByID: async (id: string) => {
+    const response = await apiClient.get(`${API_ENDPOINTS.ADMIN.ADD_CONTENT}/${id}`);
+    return response.data;
+  },
+
   addContent: async (content: any) => {
     const response = await apiClient.post(
       API_ENDPOINTS.ADMIN.ADD_CONTENT,
@@ -25,6 +35,13 @@ export const adminService = {
     const response = await apiClient.put(
       `${API_ENDPOINTS.ADMIN.ADD_CONTENT}/${id}`,
       content,
+    );
+    return response.data;
+  },
+
+  deleteContent: async (id: string) => {
+    const response = await apiClient.delete(
+      `${API_ENDPOINTS.ADMIN.ADD_CONTENT}/${id}`,
     );
     return response.data;
   },

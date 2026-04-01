@@ -1,19 +1,20 @@
 package models
 
 import (
+	"encoding/json"
+	"regexp"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+var emptyStringRegex = regexp.MustCompile(`:\s*""`)
+
 type MediaType string
 
 const (
 	MediaTypeMovie MediaType = "movie"
-	MediaTypeShow  MediaType = "show"
-	MediaTypeShort MediaType = "short"
-	MediaTypeSport MediaType = "sport"
-	MediaTypeLive  MediaType = "live"
+	MediaTypeShow  MediaType = "series"
 )
 
 type LocalizedTitle struct {
@@ -44,6 +45,7 @@ type LiveInfo struct {
 
 type StreamingInfo struct {
 	HLSMasterURL       string   `bson:"hls_master_url" json:"hls_master_url"`
+	TrailerHLSURL      string   `bson:"trailer_hls_url" json:"trailer_hls_url"`
 	DRMKeyID           string   `bson:"drm_key_id" json:"drm_key_id"`
 	AvailableQualities []string `bson:"available_qualities" json:"available_qualities"`
 	HasDolbyAtmos      bool     `bson:"has_dolby_atmos" json:"has_dolby_atmos"`
@@ -94,4 +96,28 @@ type Content struct {
 	IsPublished bool       `bson:"is_published" json:"is_published"`
 	CreatedAt   *time.Time `bson:"created_at" json:"created_at"`
 	UpdatedAt   *time.Time `bson:"updated_at" json:"updated_at"`
+}
+
+func (c *Content) UnmarshalJSON(data []byte) error {
+	// Pre-process JSON to replace empty strings with null for better Go time.Time compatibility
+	data = emptyStringRegex.ReplaceAll(data, []byte(`:null`))
+
+	type Alias Content
+	aux := &struct {
+		ID string `json:"id"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	if aux.ID != "" {
+		objID, err := primitive.ObjectIDFromHex(aux.ID)
+		if err != nil {
+			return err
+		}
+		c.ID = objID
+	}
+	return nil
 }

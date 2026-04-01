@@ -61,6 +61,25 @@ func (h *VideoHandler) AddContent(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"id": id})
 }
 
+func (h *VideoHandler) GetAllContent(c *gin.Context) {
+	results, err := h.useCase.GetAllContent(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch content"})
+		return
+	}
+	c.JSON(http.StatusOK, results)
+}
+
+func (h *VideoHandler) GetContentByID(c *gin.Context) {
+	id := c.Param("id")
+	result, err := h.useCase.GetContentByID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "content not found"})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
 func (h *VideoHandler) UpdateContent(c *gin.Context) {
 	id := c.Param("id")
 	var data bson.M
