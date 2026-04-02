@@ -24,14 +24,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -109,7 +101,14 @@ export default function VideoUploadForm({
   const [newGenre, setNewGenre] = useState("");
   const [newTag, setNewTag] = useState("");
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: "videoFile" | "trailerFile" | "posterFile" | "bannerFile" = "videoFile") => {
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field:
+      | "videoFile"
+      | "trailerFile"
+      | "posterFile"
+      | "bannerFile" = "videoFile",
+  ) => {
     if (e.target.files && e.target.files[0]) {
       setFormData({ ...formData, [field]: e.target.files[0] });
     }
@@ -169,7 +168,12 @@ export default function VideoUploadForm({
   };
 
   const handleSubmit = async () => {
-    if (!formData.videoFile || !formData.title.default || !formData.posterFile || !formData.bannerFile) {
+    if (
+      !formData.videoFile ||
+      !formData.title.default ||
+      !formData.posterFile ||
+      !formData.bannerFile
+    ) {
       setError(
         "Please provide a title, poster, banner, and select a video file.",
       );
@@ -200,7 +204,7 @@ export default function VideoUploadForm({
     try {
       console.log("🚀 Submitting Content Metadata:", finalData);
       const response = await adminService.addContent(finalData);
-      
+
       if (!response.id) {
         throw new Error("Failed to get a valid content ID from server.");
       }
@@ -349,13 +353,7 @@ export default function VideoUploadForm({
                     value="show"
                     className="text-zinc-900 font-medium focus:bg-indigo-50"
                   >
-                    TV Show
-                  </SelectItem>
-                  <SelectItem
-                    value="live"
-                    className="text-zinc-900 font-medium focus:bg-indigo-50"
-                  >
-                    Live Event
+                    Series
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -491,7 +489,9 @@ export default function VideoUploadForm({
                       ? "border-indigo-500 bg-indigo-50/20"
                       : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-zinc-100/50",
                   )}
-                  onClick={() => document.getElementById("poster-upload")?.click()}
+                  onClick={() =>
+                    document.getElementById("poster-upload")?.click()
+                  }
                 >
                   <input
                     type="file"
@@ -523,8 +523,12 @@ export default function VideoUploadForm({
                   ) : (
                     <div className="flex flex-col items-center">
                       <Upload className="h-6 w-6 text-zinc-400 mb-2" />
-                      <p className="text-xs font-bold text-zinc-900">Upload Poster</p>
-                      <p className="text-[10px] text-zinc-400">Portrait (2:3)</p>
+                      <p className="text-xs font-bold text-zinc-900">
+                        Upload Poster
+                      </p>
+                      <p className="text-[10px] text-zinc-400">
+                        Portrait (2:3)
+                      </p>
                     </div>
                   )}
                 </div>
@@ -541,7 +545,9 @@ export default function VideoUploadForm({
                       ? "border-indigo-500 bg-indigo-50/20"
                       : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-zinc-100/50",
                   )}
-                  onClick={() => document.getElementById("banner-upload")?.click()}
+                  onClick={() =>
+                    document.getElementById("banner-upload")?.click()
+                  }
                 >
                   <input
                     type="file"
@@ -573,8 +579,12 @@ export default function VideoUploadForm({
                   ) : (
                     <div className="flex flex-col items-center">
                       <Upload className="h-6 w-6 text-zinc-400 mb-2" />
-                      <p className="text-xs font-bold text-zinc-900">Upload Banner</p>
-                      <p className="text-[10px] text-zinc-400">Landscape (16:9)</p>
+                      <p className="text-xs font-bold text-zinc-900">
+                        Upload Banner
+                      </p>
+                      <p className="text-[10px] text-zinc-400">
+                        Landscape (16:9)
+                      </p>
                     </div>
                   )}
                 </div>
@@ -583,7 +593,8 @@ export default function VideoUploadForm({
 
             <div className="space-y-4 pt-4 border-t border-zinc-100">
               <Label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
-                <Play className="h-4 w-4 text-indigo-600" /> Trailer Video (Preview)
+                <Play className="h-4 w-4 text-indigo-600" /> Trailer Video
+                (Preview)
               </Label>
               <div
                 className={cn(
@@ -592,7 +603,9 @@ export default function VideoUploadForm({
                     ? "border-indigo-500 bg-indigo-50/20"
                     : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-zinc-100/50",
                 )}
-                onClick={() => document.getElementById("trailer-upload")?.click()}
+                onClick={() =>
+                  document.getElementById("trailer-upload")?.click()
+                }
               >
                 <input
                   type="file"
@@ -611,7 +624,8 @@ export default function VideoUploadForm({
                         {formData.trailerFile.name}
                       </p>
                       <p className="text-[10px] text-zinc-500">
-                        {(formData.trailerFile.size / (1024 * 1024)).toFixed(1)} MB
+                        {(formData.trailerFile.size / (1024 * 1024)).toFixed(1)}{" "}
+                        MB
                       </p>
                     </div>
                     <Button

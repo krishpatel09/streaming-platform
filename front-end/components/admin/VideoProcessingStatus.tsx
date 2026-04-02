@@ -83,6 +83,7 @@ export default function VideoProcessingStatus(
         setStep(2);
         let finalPosterPath = "";
         let finalBannerPath = "";
+        let finalTrailerPath = "";
 
         if (posterFile) {
           console.log("🖼️ Uploading Poster...");
@@ -125,6 +126,7 @@ export default function VideoProcessingStatus(
             trailerFile,
             (p) => setUploadProgress(p),
           );
+          finalTrailerPath = trailerUrlData.storage_path;
           setUploadProgress(0);
         }
 
@@ -140,11 +142,21 @@ export default function VideoProcessingStatus(
 
         // Step 4: Finalize Metadata & Trigger Processing
         setStep(4);
-        // Save poster/banner URLs to catalog record
-        if (finalPosterPath || finalBannerPath) {
+        // Save poster/banner/trailer URLs to catalog record
+        if (finalPosterPath || finalBannerPath || finalTrailerPath) {
           await adminService.updateContent(videoID, {
             poster_url: finalPosterPath,
             banner_url: finalBannerPath,
+            trailer_url: finalTrailerPath,
+          });
+        }
+
+        if (finalTrailerPath) {
+          await adminService.notifyUploadComplete({
+            video_id: videoID,
+            title: `${title.default} - Trailer`,
+            description: `Trailer for ${title.default}`,
+            storage_path: finalTrailerPath,
           });
         }
 

@@ -16,8 +16,9 @@ const nextConfig: NextConfig = {
         hostname: "avatar.iran.liara.run",
       },
       {
-        protocol: "https",
-        hostname: "image.tmdb.org",
+        protocol: "http",
+        hostname: "localhost",
+        port: "9000",
       },
     ],
   },

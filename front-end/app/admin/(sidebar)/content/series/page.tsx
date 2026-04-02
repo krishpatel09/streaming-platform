@@ -47,6 +47,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import EditContentModal from "@/components/admin/EditContentModal";
 import VideoUploadForm from "@/components/admin/VideoUploadForm";
+import { resolveStorageUrl } from "@/utils/storage";
 
 export default function SeriesPage() {
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -191,7 +192,7 @@ export default function SeriesPage() {
                   <TableCell>
                     <div className="relative h-12 w-20 rounded-lg overflow-hidden border border-zinc-200 bg-zinc-100 shadow-sm">
                       {item.poster_url && (
-                        <Image src={item.poster_url} alt={item.title?.default} fill className="object-cover" />
+                        <Image src={resolveStorageUrl(item.poster_url)} alt={item.title?.default} fill className="object-cover" unoptimized={true} />
                       )}
                     </div>
                   </TableCell>

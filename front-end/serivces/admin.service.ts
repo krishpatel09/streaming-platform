@@ -13,16 +13,6 @@ export const adminService = {
     return response.data;
   },
 
-  getAllContent: async () => {
-    const response = await apiClient.get(API_ENDPOINTS.ADMIN.ADD_CONTENT);
-    return response.data;
-  },
-
-  getContentByID: async (id: string) => {
-    const response = await apiClient.get(`${API_ENDPOINTS.ADMIN.ADD_CONTENT}/${id}`);
-    return response.data;
-  },
-
   addContent: async (content: any) => {
     const response = await apiClient.post(
       API_ENDPOINTS.ADMIN.ADD_CONTENT,
@@ -31,9 +21,21 @@ export const adminService = {
     return response.data;
   },
 
+  getAllContent: async () => {
+    const response = await apiClient.get(API_ENDPOINTS.ADMIN.GET_CONTENT);
+    return response.data;
+  },
+
+  getContentByID: async (id: string) => {
+    const response = await apiClient.get(
+      `${API_ENDPOINTS.ADMIN.GET_CONTENT_BY_ID}/${id}`,
+    );
+    return response.data;
+  },
+
   updateContent: async (id: string, content: any) => {
     const response = await apiClient.put(
-      `${API_ENDPOINTS.ADMIN.ADD_CONTENT}/${id}`,
+      `${API_ENDPOINTS.ADMIN.UPDATE_CONTENT}/${id}`,
       content,
     );
     return response.data;
