@@ -49,6 +49,7 @@ export class AuthService {
     });
 
     // Exclude password hash from response
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...result } = user;
     return result;
   }
@@ -84,9 +85,9 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     try {
-      const payload = await this.jwtService.verifyAsync(refreshToken, {
+      const payload = (await this.jwtService.verifyAsync(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      });
+      })) as unknown as { sub: string; email: string; role: string };
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
@@ -98,7 +99,7 @@ export class AuthService {
 
       const tokens = await this.generateTokens(user.id, user.email, user.role);
       return tokens;
-    } catch (e) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token.');
     }
   }
