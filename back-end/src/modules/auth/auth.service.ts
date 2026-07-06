@@ -19,14 +19,14 @@ export class AuthService {
   ) {}
 
   async signup(signupDto: SignupDto) {
-    const { email, password, name } = signupDto;
+    const { email, password, username } = signupDto;
 
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
 
     if (existingUser) {
-      throw new ConflictException('A user with this email already exists.');
+      throw new ConflictException('email already exists.');
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -35,10 +35,10 @@ export class AuthService {
       data: {
         email,
         passwordHash,
-        name,
+        username,
         profiles: {
           create: {
-            name, // Create default profile with their name
+            username,
             isKid: false,
           },
         },
@@ -48,7 +48,6 @@ export class AuthService {
       },
     });
 
-    // Exclude password hash from response
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...result } = user;
     return result;
@@ -76,7 +75,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        username: user.username,
         role: user.role,
       },
       ...tokens,

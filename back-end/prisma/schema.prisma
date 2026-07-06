@@ -16,7 +16,7 @@ model User {
   id            String    @id @default(uuid())
   email         String    @unique
   passwordHash  String    @map("password_hash")
-  name          String
+  username          String
   role          Role      @default(USER)
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
@@ -29,7 +29,7 @@ model Profile {
   id           String   @id @default(uuid())
   userId       String   @map("user_id")
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String
+  username     String
   avatar       String?
   isKid        Boolean  @default(false) @map("is_kid")
   languagePref String   @default("en") @map("language_pref")
